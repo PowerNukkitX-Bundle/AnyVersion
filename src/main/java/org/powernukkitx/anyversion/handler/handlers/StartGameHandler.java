@@ -32,6 +32,13 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
     public void handle(ProtocolPlayer player, StartGamePacket packet) {
         List<ItemDefinition> definitions = new ArrayList<>();
 
+        if(player.protocol() < ProtocolVersion.MINECRAFT_PE_1_26_0.protocol()) {
+            packet.setServerId("");
+            packet.setWorldId("");
+            packet.setScenarioId("");
+            packet.setOwnerId("");
+        }
+
         if(player.protocol() < ProtocolVersion.MINECRAFT_PE_1_21_130.protocol()) {
             packet.getBlockProperties().clear();
             for(CustomBlockDefinition definition : Registries.BLOCK.getCustomBlockDefinitionList()) {

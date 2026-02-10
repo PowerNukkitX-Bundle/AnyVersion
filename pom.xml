@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.powernukkitx.anyversion</groupId>
     <artifactId>AnyVersion</artifactId>
-    <version>2.4.0</version>
+    <version>2.5.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -65,7 +65,7 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.5.1</version>
                 <configuration>
-                    <!-- put your configurations here -->
+                    <finalName>${project.artifactId}</finalName>
                 </configuration>
                 <executions>
                     <execution>
@@ -95,7 +95,7 @@
         <dependency>
             <groupId>org.cloudburstmc.protocol</groupId>
             <artifactId>bedrock-codec</artifactId>
-            <version>3.0.0.Beta11-20251212.150341-16</version>
+            <version>3.0.0.Beta12-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
