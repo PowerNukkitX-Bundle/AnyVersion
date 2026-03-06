@@ -2,6 +2,7 @@ package org.powernukkitx.anyversion.packets;
 
 import cn.nukkit.network.connection.util.HandleByteBuf;
 import cn.nukkit.network.protocol.EmotePacket;
+import cn.nukkit.network.protocol.types.EmoteFlag;
 import org.powernukkitx.anyversion.manager.ProtocolPlayer;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
@@ -18,7 +19,7 @@ public class PEmotePacket extends EmotePacket implements ProtocolizedPacket, Clo
         } else this.emoteDuration = 0;
         this.xuid = byteBuf.readString();
         this.platformId = byteBuf.readString();
-        this.flags = byteBuf.readByte();
+        this.flags = EmoteFlag.fromByte(byteBuf.readByte());
     }
 
     @Override
@@ -30,7 +31,7 @@ public class PEmotePacket extends EmotePacket implements ProtocolizedPacket, Clo
         }
         byteBuf.writeString(this.xuid != null ? this.xuid : "");
         byteBuf.writeString(this.platformId != null ? this.platformId : "");
-        byteBuf.writeByte(flags);
+        byteBuf.writeByte(EmoteFlag.toByte(this.flags));
     }
 
     @Override

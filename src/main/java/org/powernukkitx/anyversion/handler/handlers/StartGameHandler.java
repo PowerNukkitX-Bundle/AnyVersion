@@ -49,25 +49,27 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
                         CompoundTag componentsP = permutation.getCompound("components");
                         CompoundTag collision = componentsP.getCompound("minecraft:collision_box");
                         collision.putBoolean("enabled", true);
-                        Vector3 origin = Vector3.ZERO.clone();
-                        Vector3 size = Vector3.ZERO.clone();
                         ListTag<CompoundTag> boxes = collision.removeAndGet("boxes");
-                        for(CompoundTag box : boxes.getAll()) {
-                            origin.setX(NukkitMath.min(origin.getX(), box.getFloat("minX") - 8));
-                            origin.setY(NukkitMath.min(origin.getY(), box.getFloat("minY")));
-                            origin.setZ(NukkitMath.min(origin.getZ(), box.getFloat("minZ") - 8));
-                            size.setX(NukkitMath.max(size.getX(), box.getFloat("maxX") - origin.getX()));
-                            size.setY(NukkitMath.max(size.getY(), box.getFloat("maxY") - origin.getY()));
-                            size.setZ(NukkitMath.max(size.getZ(), box.getFloat("maxZ") - origin.getZ()));
+                        if(boxes != null) {
+                            Vector3 origin = Vector3.ZERO.clone();
+                            Vector3 size = Vector3.ZERO.clone();
+                            for(CompoundTag box : boxes.getAll()) {
+                                origin.setX(NukkitMath.min(origin.getX(), box.getFloat("minX") - 8));
+                                origin.setY(NukkitMath.min(origin.getY(), box.getFloat("minY")));
+                                origin.setZ(NukkitMath.min(origin.getZ(), box.getFloat("minZ") - 8));
+                                size.setX(NukkitMath.max(size.getX(), box.getFloat("maxX") - origin.getX()));
+                                size.setY(NukkitMath.max(size.getY(), box.getFloat("maxY") - origin.getY()));
+                                size.setZ(NukkitMath.max(size.getZ(), box.getFloat("maxZ") - origin.getZ()));
+                            }
+                            collision.putList("origin", new ListTag<FloatTag>()
+                                            .add(new FloatTag(origin.getX()))
+                                            .add(new FloatTag(origin.getY()))
+                                            .add(new FloatTag(origin.getZ())))
+                                    .putList("size", new ListTag<FloatTag>()
+                                            .add(new FloatTag(size.getX()))
+                                            .add(new FloatTag(size.getY()))
+                                            .add(new FloatTag(size.getZ())));
                         }
-                        collision.putList("origin", new ListTag<FloatTag>()
-                                        .add(new FloatTag(origin.getX()))
-                                        .add(new FloatTag(origin.getY()))
-                                        .add(new FloatTag(origin.getZ())))
-                                .putList("size", new ListTag<FloatTag>()
-                                        .add(new FloatTag(size.getX()))
-                                        .add(new FloatTag(size.getY()))
-                                        .add(new FloatTag(size.getZ())));
                     }
                 }
                 packet.getBlockProperties().add(new BlockPropertyData(definition.identifier(), InventoryTransactionHandler.deepcopy(nbt)));

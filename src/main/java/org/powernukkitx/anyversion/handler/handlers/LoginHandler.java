@@ -22,7 +22,6 @@ public class LoginHandler extends PacketHandler<LoginPacket> {
             if(authPayload instanceof TokenPayload payload) {
                 CertificateChainPayload certificateChainPayload = new CertificateChainPayload(new ArrayList<>());
                 packet.setAuthPayload(new CertificateChainPayload(certificateChainPayload.getChain(), AuthType.SELF_SIGNED));
-
             }
         }
         if(packet.getProtocolVersion() < ProtocolVersion.MINECRAFT_PE_1_21_90.protocol()) {
