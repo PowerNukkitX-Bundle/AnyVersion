@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.powernukkitx.anyversion</groupId>
     <artifactId>AnyVersion</artifactId>
-    <version>2.5.1</version>
+    <version>2.6.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -95,7 +95,7 @@
         <dependency>
             <groupId>org.cloudburstmc.protocol</groupId>
             <artifactId>bedrock-codec</artifactId>
-            <version>3.0.0.Beta12-SNAPSHOT</version>
+            <version>3.0.0.Beta12-20260324.161234-12</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
