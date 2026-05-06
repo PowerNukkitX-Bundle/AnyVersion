@@ -4,6 +4,7 @@ import cn.nukkit.item.Item;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
+import org.cloudburstmc.protocol.bedrock.data.inventory.crafting.CraftingDataType;
 import org.cloudburstmc.protocol.bedrock.data.inventory.crafting.recipe.*;
 import org.cloudburstmc.protocol.bedrock.data.inventory.descriptor.DefaultDescriptor;
 import org.cloudburstmc.protocol.bedrock.data.inventory.descriptor.ItemDescriptor;
@@ -16,6 +17,8 @@ import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static cn.nukkit.network.protocol.CraftingDataPacket.*;
 
 public class CraftingDataHandler extends PacketHandler<CraftingDataPacket> {
 
@@ -42,7 +45,33 @@ public class CraftingDataHandler extends PacketHandler<CraftingDataPacket> {
                 if(data instanceof ShapedRecipeData shapedRecipeData) {
                     result = ShapedRecipeData.of(shapedRecipeData.getType(), shapedRecipeData.getId(), shapedRecipeData.getWidth(), shapedRecipeData.getHeight(), ingredients, results, shapedRecipeData.getUuid(), shapedRecipeData.getTag(), shapedRecipeData.getPriority(), shapedRecipeData.getNetId(), shapedRecipeData.isAssumeSymetry(), shapedRecipeData.getRequirement());
                 } else if(data instanceof ShapelessRecipeData shapelessRecipeData) {
-                    result = ShapelessRecipeData.of(shapelessRecipeData.getType(), shapelessRecipeData.getId(), ingredients, results, shapelessRecipeData.getUuid(), shapelessRecipeData.getTag(), shapelessRecipeData.getPriority(), shapelessRecipeData.getNetId(), shapelessRecipeData.getRequirement());
+                    switch (shapelessRecipeData.getTag()) {
+                        case CRAFTING_TAG_FURNACE,
+                             CRAFTING_TAG_SMOKER,
+                             CRAFTING_TAG_BLAST_FURNACE,
+                             CRAFTING_TAG_CAMPFIRE,
+                             CRAFTING_TAG_SOUL_CAMPFIRE -> {
+                            if(player.getVersion().protocol() < ProtocolVersion.MINECRAFT_PE_1_26_20.protocol()) {
+                                int inputId = cn.nukkit.registry.Registries.ITEM_RUNTIMEID.getInt(ingredients.getFirst().toItem().getDefinition().getIdentifier());
+                                ItemData resultItem = data.getResults().getFirst();
+                                Item item = Item.get(cn.nukkit.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
+                                if(item != null) {
+                                    ItemData itemData = ItemData.builder().definition(new SimpleItemDefinition(item.getId(), item.getRuntimeId(), false)).build();
+                                    ItemData downgrade = Registries.ITEM.downgrade(player.getVersion(), itemData);
+                                    if(downgrade.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgrade).getDefinition().getIdentifier())) continue recipe;
+                                    inputId = downgrade.getDefinition().getRuntimeId();
+                                } else continue recipe; //This never happens. Was added just in case!
+                                resultItem = Registries.ITEM.downgrade(player.getVersion(), resultItem);
+                                if(resultItem.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(resultItem).getDefinition().getIdentifier())) continue recipe;
+                                result = FurnaceRecipeData.of(CraftingDataType.FURNACE_DATA, inputId, 0, resultItem, data.getTag());
+                            } else {
+                                result = ShapelessRecipeData.of(shapelessRecipeData.getType(), shapelessRecipeData.getId(), ingredients, results, shapelessRecipeData.getUuid(), shapelessRecipeData.getTag(), shapelessRecipeData.getPriority(), shapelessRecipeData.getNetId(), shapelessRecipeData.getRequirement());
+                            }
+                        }
+                        default -> {
+                            result = ShapelessRecipeData.of(shapelessRecipeData.getType(), shapelessRecipeData.getId(), ingredients, results, shapelessRecipeData.getUuid(), shapelessRecipeData.getTag(), shapelessRecipeData.getPriority(), shapelessRecipeData.getNetId(), shapelessRecipeData.getRequirement());
+                        }
+                    }
                 }
             } else if(uncast instanceof FurnaceRecipeData data) {
                 int inputId = data.getInputId();

@@ -42,6 +42,10 @@ public class SetEntityDataHandler extends PacketHandler<SetEntityDataPacket> {
     }
 
     public static final void fixEntityFlags(ProtocolVersion version, EntityDataMap meta) {
+        if(version.protocol() < ProtocolVersion.MINECRAFT_PE_1_26_20.protocol()) {
+            meta.remove(EntityDataTypes.RESERVED_139);
+            meta.remove(EntityDataTypes.NAMEPLATE_RENDER_DISTANCE_MAX);
+        }
         BedrockCodecHelper codec = version.helper();
         if(meta.getFlags() != null) {
             try {

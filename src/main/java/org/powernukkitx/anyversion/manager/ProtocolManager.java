@@ -2,12 +2,17 @@ package org.powernukkitx.anyversion.manager;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
+import cn.nukkit.block.Block;
+import cn.nukkit.blockentity.BlockEntitySpawnable;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.player.PlayerJoinEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.event.server.DataPacketReceiveEvent;
 import cn.nukkit.event.server.DataPacketSendEvent;
+import cn.nukkit.level.Level;
+import cn.nukkit.level.format.IChunk;
+import cn.nukkit.math.Vector3;
 import cn.nukkit.network.Network;
 import cn.nukkit.network.connection.BedrockPeer;
 import cn.nukkit.network.connection.BedrockSession;
@@ -178,7 +183,7 @@ public class ProtocolManager implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if(players.containsKey(player.getUniqueId().toString())) {
+        if(players.containsKey(player.getXUID())) {
             ProtocolVersion version = get(player).getVersion();
             AnyVersion.getPlugin().getLogger().info("§e" + player.getName() + " joined with outdated Minecraft §c" + version.version() + " §e(" + version.protocol() + ")");
         }
@@ -186,15 +191,15 @@ public class ProtocolManager implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        players.remove(event.getPlayer().getUniqueId().toString());
+        players.remove(event.getPlayer().getXUID());
     }
 
-    public static ProtocolPlayer get(UUID uuid) {
-        return players.get(uuid.toString());
+    public static ProtocolPlayer get(String xuid) {
+        return players.get(xuid);
     }
 
     public static ProtocolPlayer get(Player player) {
-        return get(player.getUniqueId());
+        return get(player.getXUID());
     }
 
     private static class MapTypeToken extends TypeToken<Map<String, Object>> {

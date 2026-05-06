@@ -50,12 +50,8 @@ public class LevelChunkHandler extends PacketHandler<LevelChunkPacket> {
                     palette1.writeToNetwork(modified, blockState -> Registries.BLOCKPALETTE.getRuntimeId(player.getVersion(), blockState));
                 }
             }
-            for(int i = 0; i < total; i++) {
-                Palette<Integer> palette = new Palette<>(0);
-                ((List<Integer>) field.get(palette)).clear();
-                palette.readFromNetwork(data, new IntegerRuntimeDataDeserializer());
-                palette.writeToNetwork(modified, Integer::intValue);
-            }
+            //Biomes and Block Entities
+            modified.writeBytes(data, data.readableBytes());
 
             } catch (Exception exception) {
             throw new RuntimeException(exception);
