@@ -1,0 +1,6 @@
+# AnyVersion configuration file
+# Please edit it if do you know what you are doing.
+
+lowestVersion: 618 # The lowest version the client can join. Default is 618 (1.20.30)
+
+configVersion: 1.0.0 # Do not change this.
