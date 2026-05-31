@@ -16,12 +16,14 @@ public class InventoryContentHandler extends PacketHandler<InventoryContentPacke
     public void handle(ProtocolPlayer player, InventoryContentPacket packet) {
         List<ItemData> content = new ObjectArrayList<>();
         for(ItemData data : packet.getSlots()) {
-            if(data.getDefinition().getIdentifier().equals(BlockID.AIR)) {
+            if(data.getDefinition() == null || data.getDefinition().getIdentifier().equals(BlockID.AIR)) {
                 content.add(data);
                 continue;
             }
             ItemData downgraded = Registries.ITEM.downgrade(player.getVersion(), data);
-            if(data.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgraded).getDefinition().getIdentifier())) {
+            if(downgraded.getDefinition() == null
+                    || Registries.ITEM.getOutdated(downgraded).getDefinition() == null
+                    || data.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgraded).getDefinition().getIdentifier())) {
                 content.add(downgraded);
                 continue;
             }

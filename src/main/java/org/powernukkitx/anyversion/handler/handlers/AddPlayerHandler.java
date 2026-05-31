@@ -21,5 +21,4 @@ public class AddPlayerHandler extends PacketHandler<AddPlayerPacket> {
             packet.setCarriedItem(downgraded);
         }
     }
-
 }

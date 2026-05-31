@@ -13,6 +13,7 @@ import cn.nukkit.network.process.PacketHandlerRegistry;
 import cn.nukkit.network.process.PlayerSessionHolder;
 import cn.nukkit.network.process.SessionState;
 import cn.nukkit.network.process.handler.LoginHandler;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelPipeline;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import org.cloudburstmc.protocol.bedrock.packet.NetworkSettingsPacket;
 import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket;
 import org.powernukkitx.anyversion.AnyVersion;
 import org.powernukkitx.anyversion.registries.Registries;
+import org.powernukkitx.anyversion.utils.BedrockPacketDeepCopy;
 import org.powernukkitx.anyversion.utils.PBedrockPacketCodec;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
@@ -38,6 +40,16 @@ public class ProtocolManager implements Listener {
 
     private static final Object2ObjectOpenHashMap<String, ProtocolPlayer> players = new Object2ObjectOpenHashMap<>();
     private static final Object2ObjectOpenHashMap<PlayerSessionHolder, ProtocolVersion> pendingVersions = new Object2ObjectOpenHashMap<>();
+    private static final Field PACKET_RECEIVE_EVENT_PACKET_FIELD;
+
+    static {
+        try {
+            PACKET_RECEIVE_EVENT_PACKET_FIELD = PacketReceiveEvent.class.getDeclaredField("packet");
+            PACKET_RECEIVE_EVENT_PACKET_FIELD.setAccessible(true);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to access PacketReceiveEvent packet field", e);
+        }
+    }
 
     public ProtocolManager() {
         registerPreLoginHandlers();
@@ -47,7 +59,21 @@ public class ProtocolManager implements Listener {
     public void onPacketReceive(PacketReceiveEvent event) {
         ProtocolPlayer protocolPlayer = get(event.getPlayer());
         if (protocolPlayer != null) {
-            Registries.PACKETHANDLER.handlePacket(protocolPlayer.withPlayer(event.getPlayer()), event.getPacket());
+            BedrockPacket packet = BedrockPacketDeepCopy.copy(
+                    ByteBufAllocator.DEFAULT,
+                    protocolPlayer.getVersion().codec(),
+                    protocolPlayer.getVersion().helper(),
+                    event.getPacket());
+            Registries.PACKETHANDLER.handlePacket(protocolPlayer.withPlayer(event.getPlayer()), packet);
+            replacePacket(event, packet);
+        }
+    }
+
+    private static void replacePacket(PacketReceiveEvent event, BedrockPacket packet) {
+        try {
+            PACKET_RECEIVE_EVENT_PACKET_FIELD.set(event, packet);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to replace PacketReceiveEvent packet", e);
         }
     }
 
