@@ -2,7 +2,7 @@ package org.powernukkitx.anyversion.registries.registries;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket;
+import org.cloudburstmc.protocol.bedrock.packet.AddActorPacket;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.table.entity.*;
 
@@ -23,8 +23,8 @@ public class EntityRegistry extends Registry {
         TABLES.add(new EntityTable_1_20_0());
     }
 
-    public void transform(ProtocolVersion version, AddEntityPacket packet) {
-        String networkId = packet.getIdentifier();
+    public void transform(ProtocolVersion version, AddActorPacket packet) {
+        String networkId = packet.getActorType();
         ObjectArrayList<EntityTable> tables = new ObjectArrayList<>();
         for(EntityTable table : TABLES) {
             var optresult = table.getContent().stream().filter(definition -> {

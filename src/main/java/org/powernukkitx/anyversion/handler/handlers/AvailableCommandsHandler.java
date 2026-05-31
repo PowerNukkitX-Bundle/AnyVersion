@@ -16,8 +16,6 @@ public class AvailableCommandsHandler extends PacketHandler<AvailableCommandsPac
                 for(CommandParamData param : overload.getOverloads()) {
                     if(param.getType() == null) {
                         param.setType(CommandParam.UNKNOWN);
-                    } else if(param.getType() == CommandParam.R_VALUE) {
-                        param.setType(CommandParam.UNKNOWN);
                     }
                 }
             }

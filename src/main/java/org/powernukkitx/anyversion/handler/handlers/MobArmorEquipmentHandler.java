@@ -16,25 +16,25 @@ public class MobArmorEquipmentHandler extends PacketHandler<MobArmorEquipmentPac
             ItemData downgraded = Registries.ITEM.downgrade(player.getVersion(), body);
             packet.setBody(downgraded);
         }
-        ItemData boots = packet.getBoots();
+        ItemData boots = packet.getFeet();
         if(!boots.getDefinition().getIdentifier().equals(BlockID.AIR)) {
             ItemData downgraded = Registries.ITEM.downgrade(player.getVersion(), boots);
-            packet.setBoots(downgraded);
+            packet.setFeet(downgraded);
         }
-        ItemData leggings = packet.getLeggings();
+        ItemData leggings = packet.getLegs();
         if(!leggings.getDefinition().getIdentifier().equals(BlockID.AIR)) {
             ItemData downgraded = Registries.ITEM.downgrade(player.getVersion(), leggings);
-            packet.setLeggings(downgraded);
+            packet.setLegs(downgraded);
         }
-        ItemData chestplate = packet.getBody();
+        ItemData chestplate = packet.getTorso();
         if(!chestplate.getDefinition().getIdentifier().equals(BlockID.AIR)) {
             ItemData downgraded = Registries.ITEM.downgrade(player.getVersion(), chestplate);
-            packet.setChestplate(downgraded);
+            packet.setTorso(downgraded);
         }
-        ItemData helmet = packet.getBody();
+        ItemData helmet = packet.getHead();
         if(!helmet.getDefinition().getIdentifier().equals(BlockID.AIR)) {
             ItemData downgraded = Registries.ITEM.downgrade(player.getVersion(), helmet);
-            packet.setHelmet(downgraded);
+            packet.setHead(downgraded);
         }
     }
 

@@ -1,9 +1,9 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.block.*;
+import cn.nukkit.block.BlockAir;
+import cn.nukkit.block.BlockState;
 import cn.nukkit.level.format.palette.BlockPalette;
 import cn.nukkit.level.format.palette.Palette;
-import cn.nukkit.network.connection.util.HandleByteBuf;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.SneakyThrows;
@@ -12,7 +12,6 @@ import org.powernukkitx.anyversion.handler.PacketHandler;
 import org.powernukkitx.anyversion.manager.ProtocolPlayer;
 import org.powernukkitx.anyversion.registries.Registries;
 import org.powernukkitx.anyversion.utils.BlockStateRuntimeDataDeserializer;
-import org.powernukkitx.anyversion.utils.IntegerRuntimeDataDeserializer;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -23,43 +22,35 @@ public class LevelChunkHandler extends PacketHandler<LevelChunkPacket> {
     @SneakyThrows
     @Override
     public void handle(ProtocolPlayer player, LevelChunkPacket packet) {
-        ByteBuf data = packet.getData().copy();
-        int total = packet.getSubChunksLength();
-        HandleByteBuf modified = HandleByteBuf.of(Unpooled.buffer());
+        ByteBuf data = packet.getSerializedChunkData().copy();
+        int total = packet.getSubChunksCount();
+        ByteBuf modified = Unpooled.buffer();
         Field field = Palette.class.getDeclaredField("palette");
         try {
             field.setAccessible(true);
-            for(int i = 0; i < total; i++) {
-                modified.writeByte(data.readByte()); //Version
+            for (int i = 0; i < total; i++) {
+                modified.writeByte(data.readByte());
                 short layerCount = data.readByte();
-                modified.writeByte(layerCount); //Layer Count
-                modified.writeByte(data.readByte()); //Y coordinate
-                for(int l = 0; l < layerCount; l++) {
-                    BlockPalette palette1 = new BlockPalette(BlockAir.STATE);
-                    palette1.readFromNetwork(data, new BlockStateRuntimeDataDeserializer());
-                    List<BlockState> paletteList = (List<BlockState>) field.get(palette1);
+                modified.writeByte(layerCount);
+                modified.writeByte(data.readByte());
+                for (int l = 0; l < layerCount; l++) {
+                    BlockPalette palette = new BlockPalette(BlockAir.STATE);
+                    palette.readFromNetwork(data, new BlockStateRuntimeDataDeserializer());
+                    List<BlockState> paletteList = (List<BlockState>) field.get(palette);
                     List<BlockState> overwritten = new ArrayList<>();
-                    for(BlockState state : paletteList) {
-                        if(state != BlockAir.STATE) {
-                            overwritten.add(Registries.BLOCKSTATE.downgrade(player.getVersion(), state));
-                            continue;
-                        }
-                        overwritten.add(state);
+                    for (BlockState state : paletteList) {
+                        overwritten.add(state != BlockAir.STATE ? Registries.BLOCKSTATE.downgrade(player.getVersion(), state) : state);
                     }
-                    field.set(palette1, overwritten);
-                    palette1.writeToNetwork(modified, blockState -> Registries.BLOCKPALETTE.getRuntimeId(player.getVersion(), blockState));
+                    paletteList.clear();
+                    paletteList.addAll(overwritten);
+                    palette.writeToNetwork(modified, blockState -> Registries.BLOCKPALETTE.getRuntimeId(player.getVersion(), blockState));
                 }
             }
-            //Biomes and Block Entities
             modified.writeBytes(data, data.readableBytes());
-
-            } catch (Exception exception) {
-            throw new RuntimeException(exception);
         } finally {
             field.setAccessible(false);
+            data.release();
         }
-
-        packet.setData(modified);
+        packet.setSerializedChunkData(modified);
     }
-
 }

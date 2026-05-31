@@ -79,10 +79,8 @@ public class BlockStateRegistry extends Registry {
             }
         }
         if(!identifier.equals(state.getIdentifier())) {
-            state.getBlockStateTag().getCompound("states").putString("identifier", identifier);
             state = downgrade(version, state, true, lastProtocol);
         }
-        state.getBlockStateTag().getCompound("states").putString("identifier", identifier);
         return state;
     }
 

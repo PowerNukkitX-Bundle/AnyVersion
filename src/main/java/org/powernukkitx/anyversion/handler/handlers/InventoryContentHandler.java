@@ -2,7 +2,6 @@ package org.powernukkitx.anyversion.handler.handlers;
 
 import cn.nukkit.block.BlockID;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.InventoryContentPacket;
 import org.powernukkitx.anyversion.handler.PacketHandler;
@@ -16,7 +15,7 @@ public class InventoryContentHandler extends PacketHandler<InventoryContentPacke
     @Override
     public void handle(ProtocolPlayer player, InventoryContentPacket packet) {
         List<ItemData> content = new ObjectArrayList<>();
-        for(ItemData data : packet.getContents()) {
+        for(ItemData data : packet.getSlots()) {
             if(data.getDefinition().getIdentifier().equals(BlockID.AIR)) {
                 content.add(data);
                 continue;
@@ -26,16 +25,9 @@ public class InventoryContentHandler extends PacketHandler<InventoryContentPacke
                 content.add(downgraded);
                 continue;
             }
-            if(downgraded.getBlockDefinition() != null) {
-                if(downgraded.getBlockDefinition() instanceof SimpleBlockDefinition definition) {
-                    if(definition.getState() != null) {
-                        definition.getState().getCompound("states").remove("identifier");
-                    }
-                }
-            }
             content.add(downgraded);
         }
-        packet.setContents(content);
+        packet.setSlots(content);
     }
 
 }

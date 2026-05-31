@@ -9,39 +9,36 @@ import cn.nukkit.form.window.CustomForm;
 import cn.nukkit.form.window.Form;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
-import lombok.extern.slf4j.Slf4j;
 import org.cloudburstmc.protocol.bedrock.packet.ModalFormResponsePacket;
 import org.powernukkitx.anyversion.handler.PacketHandler;
 import org.powernukkitx.anyversion.manager.ProtocolPlayer;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
-@Slf4j
 public class ModalFormResponseHandler extends PacketHandler<ModalFormResponsePacket> {
     @Override
     public void handle(ProtocolPlayer player, ModalFormResponsePacket packet) {
-        if(player.protocol() <= ProtocolVersion.MINECRAFT_PE_1_21_70.protocol()) {
-            Player p = player.player().getPlayer();
-            Form<?> form = p.getFormWindows().get(packet.getFormId());
-            if(form != null) {
-                if(form instanceof CustomForm form1) {
-                    JsonArray res = JsonParser.parseString(packet.getFormData().trim()).getAsJsonArray();
-                    JsonArray array = new JsonArray();
-                    int element = -1;
-                    for(int idx = 0; idx < form1.elements().size(); idx++) {
-                        ElementCustom element1 = form1.elements().get(idx);
-                        if(!(element1 instanceof ElementHeader || element1 instanceof ElementDivider)) {
-                            if(player.protocol() == ProtocolVersion.MINECRAFT_PE_1_21_70.protocol()){
-                                if(element1 instanceof ElementLabel) {
-                                    array.add("");
-                                    continue;
-                                }
-                            }
-                            element++;
-                            array.add(res.get(element));
-                        } else array.add("");
+        if (player.protocol() <= ProtocolVersion.MINECRAFT_PE_1_21_70.protocol()) {
+            Player p = player.nukkitPlayer();
+            if (p == null) return;
+            Form<?> form = p.getFormWindows().get(packet.getFormID());
+            if (form instanceof CustomForm form1 && packet.getJsonResponse() != null) {
+                JsonArray res = JsonParser.parseString(packet.getJsonResponse().trim()).getAsJsonArray();
+                JsonArray array = new JsonArray();
+                int element = -1;
+                for (int idx = 0; idx < form1.elements().size(); idx++) {
+                    ElementCustom element1 = form1.elements().get(idx);
+                    if (!(element1 instanceof ElementHeader || element1 instanceof ElementDivider)) {
+                        if (player.protocol() == ProtocolVersion.MINECRAFT_PE_1_21_70.protocol() && element1 instanceof ElementLabel) {
+                            array.add("");
+                            continue;
+                        }
+                        element++;
+                        array.add(res.get(element));
+                    } else {
+                        array.add("");
                     }
-                    packet.setFormData(array.toString());
                 }
+                packet.setJsonResponse(array.toString());
             }
         }
     }

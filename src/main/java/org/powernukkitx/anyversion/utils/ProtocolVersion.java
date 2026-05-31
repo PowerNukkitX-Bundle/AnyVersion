@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils;
 
-import cn.nukkit.network.protocol.ProtocolInfo;
+import cn.nukkit.network.NetworkConstants;
 import lombok.Getter;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
@@ -102,7 +102,7 @@ public enum ProtocolVersion {
     @Getter
     private static final ProtocolVersion[] versions = values();
     @Getter
-    private static final ProtocolVersion current = get(ProtocolInfo.CURRENT_PROTOCOL);
+    private static final ProtocolVersion current = findCurrent();
 
 
     private final int PROTOCOL;
@@ -147,7 +147,27 @@ public enum ProtocolVersion {
         return versions[versions.length-1];
     }
 
+    private static ProtocolVersion findCurrent() {
+        int serverProtocol = NetworkConstants.CODEC.getProtocolVersion();
+        return Arrays.stream(versions)
+                .filter(p -> p.protocol() == serverProtocol)
+                .findAny()
+                .orElseGet(ProtocolVersion::getMax);
+    }
+
     public static ProtocolVersion get(int protocol) {
         return Arrays.stream(versions).filter(p -> p.protocol() == protocol).findAny().get();
+    }
+
+    public static boolean has(int protocol) {
+        return Arrays.stream(versions).anyMatch(p -> p.protocol() == protocol);
+    }
+
+    public static ProtocolVersion[] getVersions() {
+        return versions;
+    }
+
+    public static ProtocolVersion getCurrent() {
+        return current;
     }
 }
