@@ -2,17 +2,12 @@ package org.powernukkitx.anyversion.manager;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
-import cn.nukkit.block.Block;
-import cn.nukkit.blockentity.BlockEntitySpawnable;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.player.PlayerJoinEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.event.server.DataPacketReceiveEvent;
 import cn.nukkit.event.server.DataPacketSendEvent;
-import cn.nukkit.level.Level;
-import cn.nukkit.level.format.IChunk;
-import cn.nukkit.math.Vector3;
 import cn.nukkit.network.Network;
 import cn.nukkit.network.connection.BedrockPeer;
 import cn.nukkit.network.connection.BedrockSession;
@@ -31,6 +26,7 @@ import io.netty.channel.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.powernukkitx.anyversion.AnyVersion;
+import org.powernukkitx.anyversion.config.AnyVersionConfig;
 import org.powernukkitx.anyversion.processors.PEmoteProcessor;
 import org.powernukkitx.anyversion.utils.PBedrockPacketCodec;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
@@ -51,6 +47,18 @@ public class ProtocolManager implements Listener {
         if(event.getPacket() instanceof RequestNetworkSettingsPacket packet) {
             int client_protocol = packet.protocolVersion;
             int server_protocol = ProtocolInfo.CURRENT_PROTOCOL;
+
+            AnyVersionConfig configuration = AnyVersion.getPlugin().getConfiguration();
+            int lowest = configuration.getLowestVersion();
+
+            if (client_protocol < lowest) {
+                PlayStatusPacket status = new PlayStatusPacket();
+                status.setStatus(PlayStatusPacket.LOGIN_FAILED_CLIENT);
+
+                event.getPlayer().dataPacket(status);
+                return;
+            }
+
             if (client_protocol < server_protocol) {
                 if(Arrays.stream(ProtocolVersion.getVersions()).anyMatch(p -> p.protocol() == client_protocol)) {
                     try {
