@@ -1,6 +1,6 @@
 name: AnyVersion
 api: 2.0.0
 main: org.powernukkitx.anyversion.AnyVersion
-version: 2.7.0
+version: 2.8.0
 author: Buddelbubi
 description: Allow older clients to join your server.
