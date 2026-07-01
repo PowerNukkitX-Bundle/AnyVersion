@@ -1,12 +1,9 @@
 package org.powernukkitx.anyversion.utils;
 
-import cn.nukkit.camera.data.CameraPreset;
 import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.registry.ItemRegistry;
 import cn.nukkit.registry.ItemRuntimeIdRegistry;
 import cn.nukkit.registry.Registries;
-import lombok.AccessLevel;
-import lombok.Getter;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.*;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemVersion;
@@ -17,7 +14,6 @@ import org.cloudburstmc.protocol.common.SimpleDefinitionRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter(AccessLevel.PACKAGE)
 public class CloudburstRegistry {
 
     //We use the same palette for every version of the game and translate later on.
@@ -44,11 +40,15 @@ public class CloudburstRegistry {
         for(ItemRuntimeIdRegistry.ItemData data : ItemRuntimeIdRegistry.getITEMDATA()) {
             CompoundTag tag = new CompoundTag();
 
-            if (ItemRegistry.getItemComponents().containsCompound(data.identifier())) {
-                CompoundTag item_tag = ItemRegistry.getItemComponents().getCompound(data.identifier());
-                tag.putCompound("components", item_tag.getCompound("components"));
+            NbtMap itemComponents = ItemRegistry.getItemComponents();
+            if (itemComponents.containsKey(data.identifier())) {
+                NbtMap itemTag = itemComponents.getCompound(data.identifier());
+                NbtMap components = itemTag.getCompound("components");
+                SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), NbtMap.builder().putCompound("components", components).build());
+                itemDefinitions.add(definition);
+                continue;
             }
-            else if (Registries.ITEM.getCustomItemDefinition().containsKey(data.identifier())) {
+            if (Registries.ITEM.getCustomItemDefinition().containsKey(data.identifier())) {
                 tag = Registries.ITEM.getCustomItemDefinition().get(data.identifier()).nbt();
             }
             SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), NbtMap.fromMap(tag.parseValue()));
@@ -56,17 +56,25 @@ public class CloudburstRegistry {
         }
         List<BlockDefinition> blockDefinitions = new ArrayList<>();
         for (var blockState : Registries.BLOCKSTATE.getAllState()) {
-            NbtMap map = NbtMap.fromMap(blockState.getBlockStateTag().parseValue());
+            NbtMap map = blockState.getBlockStateTag();
             SimpleBlockDefinition definition = new SimpleBlockDefinition(blockState.getIdentifier(), blockState.blockStateHash(), map);
             blockDefinitions.add(definition);
         }
         List<NamedDefinition> namedDefinitions = new ArrayList<>();
-        for(CameraPreset cameraPreset : CameraPreset.getPresets().values()) {
-            SimpleNamedDefinition definition = new SimpleNamedDefinition(cameraPreset.getIdentifier(), cameraPreset.getId());
-            namedDefinitions.add(definition);
-        }
         itemDefinitionRegistry = SimpleDefinitionRegistry.<ItemDefinition>builder().addAll(itemDefinitions).build();
         blockDefinitionRegistry = SimpleDefinitionRegistry.<BlockDefinition>builder().addAll(blockDefinitions).build();
         namedDefinitionRegistry = SimpleDefinitionRegistry.<NamedDefinition>builder().addAll(namedDefinitions).build();
+    }
+
+    DefinitionRegistry<ItemDefinition> getItemDefinitionRegistry() {
+        return itemDefinitionRegistry;
+    }
+
+    DefinitionRegistry<BlockDefinition> getBlockDefinitionRegistry() {
+        return blockDefinitionRegistry;
+    }
+
+    DefinitionRegistry<NamedDefinition> getNamedDefinitionRegistry() {
+        return namedDefinitionRegistry;
     }
 }

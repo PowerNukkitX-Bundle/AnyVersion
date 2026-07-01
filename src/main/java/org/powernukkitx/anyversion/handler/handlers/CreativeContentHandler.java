@@ -17,12 +17,20 @@ public class CreativeContentHandler extends PacketHandler<CreativeContentPacket>
         List<CreativeItemData> c = new ArrayList<>(packet.getContents());
         packet.getContents().clear();
         for(CreativeItemData data : c) {
-            ItemData itemData = Registries.ITEM.downgrade(player.getVersion(), data.getItem());
+            if (data.getItemInstance().getDefinition() == null) {
+                packet.getContents().add(data);
+                continue;
+            }
+            ItemData itemData = Registries.ITEM.downgrade(player.getVersion(), data.getItemInstance());
+            if(itemData.getDefinition() == null || Registries.ITEM.getOutdated(itemData).getDefinition() == null) {
+                packet.getContents().add(data);
+                continue;
+            }
             if(itemData.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(itemData).getDefinition().getIdentifier())) continue;
             CreativeItemData newData = CreativeItemData.builder()
-                    .item(itemData)
-                    .netId(data.getNetId())
-                    .groupId(data.getGroupId())
+                    .itemInstance(itemData)
+                    .creativeNetId(data.getCreativeNetId())
+                    .groupIndex(data.getGroupIndex())
                     .build();
             packet.getContents().add(newData);
         }

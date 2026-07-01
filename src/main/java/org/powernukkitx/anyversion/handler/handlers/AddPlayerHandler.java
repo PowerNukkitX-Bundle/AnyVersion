@@ -12,13 +12,13 @@ public class AddPlayerHandler extends PacketHandler<AddPlayerPacket> {
 
     @Override
     public void handle(ProtocolPlayer player, AddPlayerPacket packet) {
-        ItemData body = packet.getHand();
+        ItemData body = packet.getCarriedItem();
         ProtocolVersion version = player.getVersion();
-        SetEntityDataHandler.fixEntityFlags(version, packet.getMetadata());
+        packet.setActorData(SetEntityDataHandler.copyActorData(packet.getActorData()));
+        SetEntityDataHandler.fixEntityFlags(version, packet.getActorData());
         if(!body.getDefinition().getIdentifier().equals(BlockID.AIR)) {
             ItemData downgraded = Registries.ITEM.downgrade(version, body);
-            packet.setHand(downgraded);
+            packet.setCarriedItem(downgraded);
         }
     }
-
 }

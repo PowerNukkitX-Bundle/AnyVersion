@@ -1,12 +1,11 @@
 package org.powernukkitx.anyversion.utils.palette;
 
 import cn.nukkit.block.*;
-import cn.nukkit.nbt.NBTIO;
-import cn.nukkit.nbt.tag.CompoundTag;
-
-import cn.nukkit.nbt.tag.ListTag;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.cloudburstmc.nbt.NbtMap;
+import org.cloudburstmc.nbt.NbtType;
+import org.cloudburstmc.nbt.NbtUtils;
 import org.powernukkitx.anyversion.AnyVersion;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.definition.LegacyBlockDefinition;
@@ -23,15 +22,16 @@ public class LegacyBlockPalette extends BlockPalette {
     public LegacyBlockPalette(ProtocolVersion version)  {
         super(version);
         try (var stream = AnyVersion.getPlugin().getResource("states/block_palette_" + version.protocol() + ".nbt")) {
-            ListTag<CompoundTag> itemComponents = NBTIO.readCompressed(stream).getList("blocks", CompoundTag.class);
+            NbtMap root = (NbtMap) NbtUtils.createGZIPReader(stream).readTag();
+            var itemComponents = root.getList("blocks", NbtType.COMPOUND);
             int runtimeId = 0;
-            for(CompoundTag tag : itemComponents.getAll()) {
+            for(NbtMap tag : itemComponents) {
                 String name = tag.getString("name");
                 if(!states.containsKey(name)) {
                     this.states.put(name, new ObjectOpenHashSet<>());
                 }
                 int id = tag.getInt("id");
-                Map<String, Object> states = tag.getCompound("states").parseValue();
+                Map<String, Object> states = tag.getCompound("states");
                 LegacyBlockDefinition definition = new LegacyBlockDefinition(name, id, runtimeId++, states);
                 this.states.get(name).add(definition);
             }

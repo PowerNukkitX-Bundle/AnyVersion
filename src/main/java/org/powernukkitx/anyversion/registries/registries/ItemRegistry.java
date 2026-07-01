@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import lombok.extern.slf4j.Slf4j;
 import org.cloudburstmc.nbt.NbtMap;
+import org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
@@ -35,6 +36,7 @@ public class ItemRegistry extends Registry {
 
     @Override
     public void init() {
+        TABLES.add(new ItemDataTable_1_26_30());
         TABLES.add(new ItemDataTable_1_21_130());
         TABLES.add(new ItemDataTable_1_21_110());
         TABLES.add(new ItemDataTable_1_21_90());
@@ -70,16 +72,27 @@ public class ItemRegistry extends Registry {
             return data;
         }
         SimpleItemDefinition stateDefinition = (SimpleItemDefinition) data.getDefinition();
-        SimpleBlockDefinition simpleBlockDefinition = (SimpleBlockDefinition) data.getBlockDefinition();
+        BlockDefinition blockDefinition = data.getBlockDefinition();
+        SimpleBlockDefinition simpleBlockDefinition = blockDefinition instanceof SimpleBlockDefinition definition ? definition : null;
         BlockState blockState = state;
         if(usedDefinitions.isEmpty()) {
             if(blockState.getIdentifier().equals(BlockID.AIR)) {
-                Block block = Block.get(stateDefinition.getIdentifier());
-                if (!block.isAir()) {
-                    blockState = block.getProperties().getDefaultState();
-                    simpleBlockDefinition = new SimpleBlockDefinition(blockState.getIdentifier(), blockState.blockStateHash(), NbtMap.fromMap(blockState.getBlockStateTag().parseValue()));
+                if (blockDefinition != null) {
+                    blockState = cn.nukkit.registry.Registries.BLOCKSTATE.get(blockDefinition.getRuntimeId());
                 }
-            } else simpleBlockDefinition = new SimpleBlockDefinition(blockState.getIdentifier(), blockState.blockStateHash(), NbtMap.fromMap(blockState.getBlockStateTag().parseValue()));
+                if (blockState == null || blockState.getIdentifier().equals(BlockID.AIR)) {
+                    Block block = Block.get(stateDefinition.getIdentifier());
+                    if (!block.isAir()) {
+                        blockState = block.getProperties().getDefaultState();
+                    }
+                }
+                if (blockState == null) {
+                    blockState = BlockAir.STATE;
+                }
+                if (!blockState.getIdentifier().equals(BlockID.AIR)) {
+                    simpleBlockDefinition = new SimpleBlockDefinition(blockState.getIdentifier(), blockState.blockStateHash(), blockState.getBlockStateTag());
+                }
+            } else simpleBlockDefinition = new SimpleBlockDefinition(blockState.getIdentifier(), blockState.blockStateHash(), blockState.getBlockStateTag());
         }
         data = ItemData.builder()
                 .definition(stateDefinition)
@@ -125,7 +138,7 @@ public class ItemRegistry extends Registry {
 
         if(version.protocol() < ProtocolVersion.MINECRAFT_PE_1_19_80.protocol()) {
             if(!blockState.getIdentifier().equals(BlockID.AIR)) {
-                SimpleBlockDefinition blockDefinition = (SimpleBlockDefinition) data.getBlockDefinition();
+                SimpleBlockDefinition dataBlockDefinition = (SimpleBlockDefinition) data.getBlockDefinition();
                 data = ItemData.builder()
                         .definition(data.getDefinition())
                         .damage(data.getDamage())
@@ -134,7 +147,7 @@ public class ItemRegistry extends Registry {
                         .canPlace(data.getCanPlace())
                         .canBreak(data.getCanBreak())
                         .blockingTicks(data.getBlockingTicks())
-                        .blockDefinition(new SimpleBlockDefinition(blockDefinition.getIdentifier(), Registries.BLOCKPALETTE.getRuntimeId(version, Registries.BLOCKSTATE.downgrade(version, blockState)), blockDefinition.getState()))
+                        .blockDefinition(new SimpleBlockDefinition(dataBlockDefinition.getIdentifier(), Registries.BLOCKPALETTE.getRuntimeId(version, Registries.BLOCKSTATE.downgrade(version, blockState)), dataBlockDefinition.getState()))
                         .usingNetId(data.isUsingNetId())
                         .netId(data.getNetId())
                         .build();

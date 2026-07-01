@@ -20,6 +20,7 @@ public class BlockStateRegistry extends Registry {
 
     @Override
     public void init() {
+        TABLES.add(new BlockStateTable_1_26_30());
         TABLES.add(new BlockStateTable_1_26_20());
         TABLES.add(new BlockStateTable_1_21_110());
         TABLES.add(new BlockStateTable_1_21_90());
@@ -79,10 +80,8 @@ public class BlockStateRegistry extends Registry {
             }
         }
         if(!identifier.equals(state.getIdentifier())) {
-            state.getBlockStateTag().getCompound("states").putString("identifier", identifier);
             state = downgrade(version, state, true, lastProtocol);
         }
-        state.getBlockStateTag().getCompound("states").putString("identifier", identifier);
         return state;
     }
 

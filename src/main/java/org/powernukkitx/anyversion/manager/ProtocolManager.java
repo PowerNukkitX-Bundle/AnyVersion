@@ -6,194 +6,97 @@ import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.player.PlayerJoinEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
-import cn.nukkit.event.server.DataPacketReceiveEvent;
-import cn.nukkit.event.server.DataPacketSendEvent;
-import cn.nukkit.network.Network;
-import cn.nukkit.network.connection.BedrockPeer;
-import cn.nukkit.network.connection.BedrockSession;
-import cn.nukkit.network.connection.netty.codec.compression.CompressionCodec;
-import cn.nukkit.network.connection.netty.codec.packet.BedrockPacketCodec;
-import cn.nukkit.network.connection.util.ChainValidationResult;
+import cn.nukkit.event.server.PacketReceiveEvent;
+import cn.nukkit.network.NetworkConstants;
+import cn.nukkit.network.process.PacketHandler;
+import cn.nukkit.network.process.PacketHandlerRegistry;
+import cn.nukkit.network.process.PlayerSessionHolder;
 import cn.nukkit.network.process.SessionState;
-import cn.nukkit.network.process.handler.InGamePacketHandler;
-import cn.nukkit.network.protocol.*;
-import cn.nukkit.network.protocol.types.PlayerInfo;
-import cn.nukkit.utils.EncryptionUtils;
-import com.github.oxo42.stateless4j.StateMachine;
-import com.github.oxo42.stateless4j.StateMachineConfig;
-import com.google.gson.reflect.TypeToken;
-import io.netty.channel.*;
+import cn.nukkit.network.process.auth.ClientChainData;
+import cn.nukkit.network.process.auth.ClientSkinData;
+import cn.nukkit.network.process.handler.LoginHandler;
+import cn.nukkit.event.player.PlayerPreLoginEvent;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelPipeline;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.cloudburstmc.protocol.bedrock.data.auth.PlayerAuthenticationType;
+import org.cloudburstmc.protocol.bedrock.data.skin.SerializedSkin;
+import org.cloudburstmc.protocol.bedrock.netty.codec.packet.BedrockPacketCodec;
+import org.cloudburstmc.protocol.bedrock.data.DisconnectFailReason;
+import org.cloudburstmc.protocol.bedrock.data.PacketCompressionAlgorithm;
+import org.cloudburstmc.protocol.bedrock.data.PlayStatus;
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket;
+import org.cloudburstmc.protocol.bedrock.packet.LoginPacket;
+import org.cloudburstmc.protocol.bedrock.packet.NetworkSettingsPacket;
+import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket;
+import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket;
+import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
+import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.jwt.consumer.JwtContext;
 import org.powernukkitx.anyversion.AnyVersion;
-import org.powernukkitx.anyversion.config.AnyVersionConfig;
-import org.powernukkitx.anyversion.processors.PEmoteProcessor;
+import org.powernukkitx.anyversion.registries.Registries;
+import org.powernukkitx.anyversion.utils.BedrockPacketDeepCopy;
 import org.powernukkitx.anyversion.utils.PBedrockPacketCodec;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.security.PublicKey;
+import java.util.Locale;
+import java.util.Map;
 
 @Slf4j
 public class ProtocolManager implements Listener {
 
     private static final Object2ObjectOpenHashMap<String, ProtocolPlayer> players = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectOpenHashMap<PlayerSessionHolder, ProtocolVersion> pendingVersions = new Object2ObjectOpenHashMap<>();
+    private static final Field PACKET_RECEIVE_EVENT_PACKET_FIELD;
 
-    @EventHandler
-    public void onRequestNetworkSettingsPacket(DataPacketReceiveEvent event) {
-        if(event.getPacket() instanceof RequestNetworkSettingsPacket packet) {
-            int client_protocol = packet.protocolVersion;
-            int server_protocol = ProtocolInfo.CURRENT_PROTOCOL;
-
-            AnyVersionConfig configuration = AnyVersion.getPlugin().getConfiguration();
-            int lowest = configuration.getLowestVersion();
-
-            if (client_protocol < lowest) {
-                PlayStatusPacket status = new PlayStatusPacket();
-                status.setStatus(PlayStatusPacket.LOGIN_FAILED_CLIENT);
-
-                event.getPlayer().dataPacket(status);
-                return;
-            }
-
-            if (client_protocol < server_protocol) {
-                if(Arrays.stream(ProtocolVersion.getVersions()).anyMatch(p -> p.protocol() == client_protocol)) {
-                    try {
-                        Field fSessionMap = Network.class.getDeclaredField("sessionMap");
-                        fSessionMap.setAccessible(true);
-                        Map<InetSocketAddress, BedrockSession> sessionMap = (Map<InetSocketAddress, BedrockSession>) fSessionMap.get(Server.getInstance().getNetwork());
-                        fSessionMap.setAccessible(false);
-                        Field fMachine = BedrockSession.class.getDeclaredField("machine");
-                        fMachine.setAccessible(true);
-                        for (BedrockSession bedrockSession : sessionMap.values()) {
-                            StateMachine<SessionState, SessionState> machine = (StateMachine<SessionState, SessionState>) fMachine.get(bedrockSession);
-                            if(machine.getState() == SessionState.START) {
-                                Field fConfig = StateMachine.class.getDeclaredField("config");
-                                fConfig.setAccessible(true);
-                                StateMachineConfig<SessionState, SessionState> config = (StateMachineConfig<SessionState, SessionState>) fConfig.get(machine);
-                                fConfig.setAccessible(false);
-                                ProtocolPlayer player = new ProtocolPlayer(bedrockSession, client_protocol);
-                                PBedrockPacketCodec codec = new PBedrockPacketCodec(player);
-                                ChannelPipeline pipeline = bedrockSession.getPeer().getChannel().pipeline();
-                                pipeline.replace(BedrockPacketCodec.NAME, BedrockPacketCodec.NAME, codec);
-                                config.configure(SessionState.START).onExit(() -> {
-                                    if(client_protocol < ProtocolVersion.MINECRAFT_PE_1_20_60.protocol()) {
-                                        Channel channel = bedrockSession.getPeer().getChannel();
-                                        ChannelHandler handler = channel.pipeline().get(CompressionCodec.NAME);
-                                        if(handler instanceof CompressionCodec compressionCodec) {
-                                            try {
-                                                Field field = compressionCodec.getClass().getDeclaredField("prefixed");
-                                                field.setAccessible(true);
-                                                field.set(compressionCodec, false);
-                                                field.setAccessible(false);
-                                            } catch (NoSuchFieldException | IllegalAccessException e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                        fMachine.setAccessible(false);
-
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    packet.protocolVersion = server_protocol;
-                } else AnyVersion.getPlugin().getLogger().info("Someone tried to join using protocol " + packet.protocolVersion);
-            }
-        }
-    }
-
-
-    @EventHandler
-    public void onLoginPacket(DataPacketReceiveEvent event) {
+    static {
         try {
-            if(event.getPacket() instanceof LoginPacket packet) {
-                if(packet.protocol == ProtocolInfo.CURRENT_PROTOCOL) return;
-                Field fSessionMap = Network.class.getDeclaredField("sessionMap");
-                fSessionMap.setAccessible(true);
-                Map<InetSocketAddress, BedrockSession> sessionMap = (Map<InetSocketAddress, BedrockSession>) fSessionMap.get(Server.getInstance().getNetwork());
-                fSessionMap.setAccessible(false);
-                for(BedrockSession bedrockSession : sessionMap.values()) {
-                    Field fMachine = BedrockSession.class.getDeclaredField("machine");
-                    fMachine.setAccessible(true);
-                    StateMachine<SessionState, SessionState> machine = (StateMachine<SessionState, SessionState>) fMachine.get(bedrockSession);
-                    fMachine.setAccessible(false);
-                    if(machine.getState() == SessionState.LOGIN) {
-                        ProtocolPlayer player = new ProtocolPlayer(bedrockSession, packet.protocol);
-
-                        ChainValidationResult result = EncryptionUtils.validatePayload(packet.authPayload);
-                        String uuid = result.identityClaims().extraData.xuid;
-                        players.put(uuid, player);
-                        Field fConfig = StateMachine.class.getDeclaredField("config");
-                        fConfig.setAccessible(true);
-                        StateMachineConfig<SessionState, SessionState> config = (StateMachineConfig<SessionState, SessionState>) fConfig.get(machine);
-                        fConfig.setAccessible(false);
-                        Method onServerLoginSuccess = BedrockSession.class.getDeclaredMethod("onServerLoginSuccess");
-                        Field fInfo = BedrockSession.class.getDeclaredField("info");
-                        String finalUuid = uuid;
-
-                        config.configure(SessionState.LOGIN).onExit(() -> {
-                            try {
-                                onServerLoginSuccess.setAccessible(true);
-                                onServerLoginSuccess.invoke(bedrockSession);
-                                onServerLoginSuccess.setAccessible(false);
-                                fInfo.setAccessible(true);
-                                PlayerInfo info = (PlayerInfo) fInfo.get(bedrockSession);
-                                fInfo.setAccessible(false);
-                                if(info.getUniqueId().toString().equals(finalUuid)) {
-                                    PBedrockPacketCodec codec = new PBedrockPacketCodec(player);
-                                    ChannelPipeline pipeline = bedrockSession.getPeer().getChannel().pipeline();
-                                    pipeline.addBefore(BedrockPacketCodec.NAME, PBedrockPacketCodec.NAME, codec);
-                                    pipeline.remove(BedrockPacketCodec.NAME);
-                                    config.configure(SessionState.IN_GAME).onEntry(() -> {
-                                        InGamePacketHandler handler = new InGamePacketHandler(bedrockSession);
-                                        handler.getManager().registerProcessor(new PEmoteProcessor());
-                                        bedrockSession.setPacketHandler(handler);
-                                    });
-                                }
-                            } catch (IllegalAccessException | InvocationTargetException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            PACKET_RECEIVE_EVENT_PACKET_FIELD = PacketReceiveEvent.class.getDeclaredField("packet");
+            PACKET_RECEIVE_EVENT_PACKET_FIELD.setAccessible(true);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to access PacketReceiveEvent packet field", e);
         }
     }
 
+    public ProtocolManager() {
+        registerPreLoginHandlers();
+    }
+
     @EventHandler
-    public void onDataPacketSend(DataPacketSendEvent event) {
-        Player player = event.getPlayer();
-        if(player != null) {
-            BedrockSession session = player.getSession();
-            BedrockPeer peer = session.getPeer();
-            Channel channel = peer.getChannel();
-            ChannelPipeline pipeline = channel.pipeline();
-            PBedrockPacketCodec codec = pipeline.get(PBedrockPacketCodec.class);
-            if(codec != null) {
-                ProtocolPlayer protocolPlayer = codec.getProtocolPlayer();
-                ProtocolVersion protocol = protocolPlayer.getVersion();
-                if(protocol.codec().getPacketDefinition(event.getPacket().pid()) == null) {
-                    event.setCancelled();
-                    log.debug("Tried to send " + event.getPacket().getClass().getSimpleName() + " that is not available for that version! (" + protocol.protocol() + ")");
-                }
-            }
+    public void onPacketReceive(PacketReceiveEvent event) {
+        ProtocolPlayer protocolPlayer = get(event.getPlayer());
+        if (protocolPlayer != null) {
+            BedrockPacket packet = BedrockPacketDeepCopy.copy(
+                    ByteBufAllocator.DEFAULT,
+                    protocolPlayer.getVersion().codec(),
+                    protocolPlayer.getVersion().helper(),
+                    event.getPacket());
+            Registries.PACKETHANDLER.handlePacket(protocolPlayer.withPlayer(event.getPlayer()), packet);
+            replacePacket(event, packet);
+        }
+    }
+
+    private static void replacePacket(PacketReceiveEvent event, BedrockPacket packet) {
+        try {
+            PACKET_RECEIVE_EVENT_PACKET_FIELD.set(event, packet);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to replace PacketReceiveEvent packet", e);
         }
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        if(players.containsKey(player.getXUID())) {
-            ProtocolVersion version = get(player).getVersion();
-            AnyVersion.getPlugin().getLogger().info("§e" + player.getName() + " joined with outdated Minecraft §c" + version.version() + " §e(" + version.protocol() + ")");
+        ProtocolPlayer protocolPlayer = get(event.getPlayer());
+        if (protocolPlayer != null) {
+            ProtocolVersion version = protocolPlayer.getVersion();
+            AnyVersion.getPlugin().getLogger().info(event.getPlayer().getName() + " joined with outdated Minecraft " + version.version() + " (" + version.protocol() + ")");
         }
     }
 
@@ -207,10 +110,253 @@ public class ProtocolManager implements Listener {
     }
 
     public static ProtocolPlayer get(Player player) {
-        return get(player.getXUID());
+        return player == null ? null : get(player.getXUID());
     }
 
-    private static class MapTypeToken extends TypeToken<Map<String, Object>> {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void registerPreLoginHandlers() {
+        try {
+            Field mapField = PacketHandlerRegistry.class.getDeclaredField("MAP");
+            mapField.setAccessible(true);
+            Map<Class<? extends BedrockPacket>, PacketHandler> map = (Map<Class<? extends BedrockPacket>, PacketHandler>) mapField.get(null);
+            map.put(RequestNetworkSettingsPacket.class, new AnyVersionRequestNetworkSettingsHandler());
+            map.put(LoginPacket.class, new AnyVersionLoginHandler());
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to register AnyVersion packet handlers", e);
+        }
     }
 
+    private static final class AnyVersionRequestNetworkSettingsHandler implements PacketHandler<RequestNetworkSettingsPacket> {
+
+        @Override
+        public void handle(RequestNetworkSettingsPacket packet, PlayerSessionHolder holder, Server server) {
+            int clientProtocol = packet.getClientNetworkVersion();
+            int serverProtocol = NetworkConstants.CODEC.getProtocolVersion();
+            ProtocolVersion version = ProtocolVersion.has(clientProtocol) ? ProtocolVersion.get(clientProtocol) : null;
+
+            if (clientProtocol > serverProtocol) {
+                holder.sendPlayStatus(PlayStatus.LOGIN_FAILED_SERVER_OLD);
+                holder.disconnect(DisconnectFailReason.OUTDATED_SERVER);
+                return;
+            }
+            if (clientProtocol < serverProtocol && version == null) {
+                holder.sendPlayStatus(PlayStatus.LOGIN_FAILED_CLIENT_OLD);
+                holder.disconnect(DisconnectFailReason.OUTDATED_CLIENT);
+                return;
+            }
+            if (holder.getState().equals(SessionState.REQUESTED_NETWORK_SETTINGS)) {
+                holder.disconnect(DisconnectFailReason.UNEXPECTED_PACKET);
+                return;
+            }
+            if (isAddressBanned(server, holder)) {
+                return;
+            }
+
+            ProtocolVersion targetVersion = version == null ? ProtocolVersion.getCurrent() : version;
+            pendingVersions.put(holder, targetVersion);
+            holder.getSession().setCodec(targetVersion.codec());
+            if (targetVersion.protocol() != serverProtocol) {
+                installPacketTransformer(holder, targetVersion);
+            }
+            holder.setState(SessionState.REQUESTED_NETWORK_SETTINGS);
+
+            PacketCompressionAlgorithm algorithm = Server.getInstance().getSettings().networkSettings().snappy()
+                    ? PacketCompressionAlgorithm.SNAPPY
+                    : PacketCompressionAlgorithm.ZLIB;
+            NetworkSettingsPacket networkSettingsPacket = new NetworkSettingsPacket();
+            networkSettingsPacket.setCompressionThreshold(1);
+            networkSettingsPacket.setCompressionAlgorithm(algorithm);
+
+            holder.getSession().sendPacketImmediately(networkSettingsPacket);
+            holder.getSession().setCompression(algorithm);
+            holder.setState(SessionState.LOGIN);
+        }
+
+        private boolean isAddressBanned(Server server, PlayerSessionHolder holder) {
+            String address = ((InetSocketAddress) holder.getSession().getSocketAddress()).getAddress().getHostAddress();
+            if (server.getIPBans().isBanned(address)) {
+                String reason = server.getIPBans().getEntires().get(address).getReason();
+                holder.getSession().close(!reason.isEmpty() ? "You are banned. Reason: " + reason : "You are banned");
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private static final class AnyVersionLoginHandler implements PacketHandler<LoginPacket> {
+        private final LoginHandler delegate = new LoginHandler();
+
+        @Override
+        public void handle(LoginPacket packet, PlayerSessionHolder holder, Server server) {
+            int clientProtocol = packet.getClientNetworkVersion();
+            ProtocolVersion pending = pendingVersions.remove(holder);
+            ProtocolVersion version = ProtocolVersion.has(clientProtocol) ? ProtocolVersion.get(clientProtocol) : pending;
+            if (version == null) {
+                version = ProtocolVersion.getCurrent();
+            }
+            packet.setClientNetworkVersion(NetworkConstants.CODEC.getProtocolVersion());
+            boolean downgraded = version.protocol() != NetworkConstants.CODEC.getProtocolVersion();
+            if (downgraded) {
+                handleLenient(packet, holder, server, version);
+            } else {
+                delegate.handle(packet, holder, server);
+            }
+            if (holder.getPlayerInfo() != null && downgraded) {
+                String xuid = holder.getPlayerInfo().getIdentityClaims().extraData.xuid;
+                players.put(xuid, new ProtocolPlayer(holder.getSession(), version.protocol()));
+            }
+        }
+
+        private void handleLenient(LoginPacket packet, PlayerSessionHolder holder, Server server, ProtocolVersion version) {
+            if (!holder.getState().equals(SessionState.LOGIN)) {
+                holder.disconnect(DisconnectFailReason.UNEXPECTED_PACKET);
+                return;
+            }
+
+            final PlayerAuthenticationType type = packet.getAuthenticationType();
+            final DisconnectFailReason notAuthenticated = DisconnectFailReason.NOT_AUTHENTICATED;
+            if (type.equals(PlayerAuthenticationType.UNKNOWN)) {
+                holder.disconnect(notAuthenticated);
+                return;
+            }
+
+            final boolean xboxAuthRequired = server.getSettings().baseSettings().xboxAuth();
+            if (xboxAuthRequired && packet.getToken() == null || packet.getToken().isEmpty()) {
+                holder.disconnect(notAuthenticated);
+                return;
+            }
+
+            try {
+                final ChainValidationResult result = EncryptionUtils.validateToken(type, packet.getToken());
+                if (xboxAuthRequired && !result.signed() && !server.getSettings().baseSettings().waterdogpe()) {
+                    holder.disconnect(notAuthenticated);
+                    return;
+                }
+
+                final ChainValidationResult.IdentityClaims identityClaims = result.identityClaims();
+                final PlayerPreLoginEvent event = new PlayerPreLoginEvent(identityClaims);
+                server.getPluginManager().callEvent(event);
+                if (event.isCancelled()) {
+                    holder.disconnect(DisconnectFailReason.UNKNOWN, event.getKickMessage());
+                    return;
+                }
+
+                if (server.getOnlinePlayers().size() >= server.getMaxPlayers()) {
+                    holder.disconnect(DisconnectFailReason.SERVER_FULL);
+                    return;
+                }
+
+                if (!server.isWhitelisted(identityClaims.extraData.displayName.toLowerCase(Locale.ENGLISH))) {
+                    holder.disconnect(DisconnectFailReason.NOT_ALLOWED);
+                    return;
+                }
+
+                var banEntry = server.getNameBans().getEntires().get(identityClaims.extraData.displayName.toLowerCase(Locale.ENGLISH));
+                if (banEntry != null) {
+                    String reason = banEntry.getReason();
+                    holder.disconnect(DisconnectFailReason.UNKNOWN, !reason.isEmpty() ? "You are banned. Reason: " + reason : "You are banned");
+                    return;
+                }
+
+                final LenientClientJwt lenient = validateClientJwtLenient(packet, identityClaims.parsedIdentityPublicKey());
+                if (lenient == null) {
+                    holder.disconnect(DisconnectFailReason.INVALID_PLATFORM_SKIN);
+                    return;
+                }
+
+                if (lenient.chain.isEduMode()) {
+                    holder.sendPlayStatus(PlayStatus.LOGIN_FAILED_EDITION_MISMATCH_EDU_TO_VANILLA);
+                    holder.disconnect(DisconnectFailReason.EDITION_MISMATCH_EDU_TO_VANILLA);
+                    return;
+                }
+
+                holder.setPlayerInfo(new Player.PlayerInfo(identityClaims, lenient.chain, lenient.skin, result.signed()));
+
+                if (server.enabledNetworkEncryption) {
+                    enableEncryption(identityClaims, holder);
+                } else {
+                    holder.sendPlayStatus(PlayStatus.LOGIN_SUCCESS);
+                    holder.setState(SessionState.RESOURCE_PACK);
+                    holder.sendResourcePacksInfo(server);
+                }
+            } catch (Exception e) {
+                log.debug("Lenient login failed for protocol {}", version.protocol(), e);
+                holder.disconnect(notAuthenticated);
+            }
+        }
+
+        private LenientClientJwt validateClientJwtLenient(LoginPacket packet, PublicKey identityPublicKey) {
+            final String clientJwt = packet.getClientJwt();
+            if (clientJwt == null || clientJwt.isEmpty()) {
+                return null;
+            }
+            try {
+                final JwtContext ctx = new JwtConsumerBuilder()
+                        .setVerificationKey(identityPublicKey)
+                        .build()
+                        .process(clientJwt);
+                final JwtClaims claims = ctx.getJwtClaims();
+                padChainClaims(claims);
+
+                final ClientChainData chain = ClientChainData.from(claims);
+                final SerializedSkin skin = ClientSkinData.readSkin(claims);
+                if (chain == null || skin == null) {
+                    return null;
+                }
+                return new LenientClientJwt(chain, skin);
+            } catch (InvalidJwtException ignored) {
+            }
+            return null;
+        }
+
+        private void enableEncryption(ChainValidationResult.IdentityClaims claims, PlayerSessionHolder holder) {
+            try {
+                var session = holder.getSession();
+                var clientKey = EncryptionUtils.parseKey(claims.identityPublicKey);
+                var encryptionKeyPair = EncryptionUtils.createKeyPair();
+                var encryptionToken = EncryptionUtils.generateRandomToken();
+                var encryptionKey = EncryptionUtils.getSecretKey(encryptionKeyPair.getPrivate(), clientKey, encryptionToken);
+                var handshakeWebToken = EncryptionUtils.createHandshakeJwt(encryptionKeyPair, encryptionToken);
+                if (!holder.getSession().isConnected()) {
+                    return;
+                }
+                var pk = new ServerToClientHandshakePacket();
+                pk.setHandshakeWebToken(handshakeWebToken);
+                session.sendPacketImmediately(pk);
+                session.enableEncryption(encryptionKey);
+                holder.setState(SessionState.ENCRYPTION);
+            } catch (Exception e) {
+                holder.disconnect(DisconnectFailReason.UNKNOWN, "encryption error");
+            }
+        }
+    }
+
+    private record LenientClientJwt(ClientChainData chain, SerializedSkin skin) { }
+
+    private static void padChainClaims(JwtClaims claims) {
+        putIfAbsent(claims, "CompatibleWithClientSideChunkGen", Boolean.FALSE);
+        putIfAbsent(claims, "GraphicsMode", 0);
+        putIfAbsent(claims, "MemoryTier", 0);
+        putIfAbsent(claims, "ClientIsEditorCapable", Boolean.FALSE);
+        putIfAbsent(claims, "ClientEditorConnectionIntent", 0);
+    }
+
+    private static void putIfAbsent(JwtClaims claims, String key, Object value) {
+        if (!claims.hasClaim(key)) {
+            claims.setClaim(key, value);
+        }
+    }
+
+    private static void installPacketTransformer(PlayerSessionHolder holder, ProtocolVersion version) {
+        ChannelPipeline pipeline = holder.getSession().getPeer().getChannel().pipeline();
+        if (pipeline.get(PBedrockPacketCodec.NAME) != null) {
+            pipeline.remove(PBedrockPacketCodec.NAME);
+        }
+        PBedrockPacketCodec transformer = new PBedrockPacketCodec(new ProtocolPlayer(holder.getSession(), version.protocol()));
+        if (pipeline.get(BedrockPacketCodec.NAME) != null) {
+            pipeline.addAfter(BedrockPacketCodec.NAME, PBedrockPacketCodec.NAME, transformer);
+        } else {
+            pipeline.addLast(PBedrockPacketCodec.NAME, transformer);
+        }
+    }
 }

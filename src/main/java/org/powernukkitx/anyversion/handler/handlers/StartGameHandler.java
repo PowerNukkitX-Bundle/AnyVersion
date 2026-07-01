@@ -10,7 +10,6 @@ import cn.nukkit.registry.ItemRegistry;
 import cn.nukkit.registry.ItemRuntimeIdRegistry;
 import cn.nukkit.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
-import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode;
 import org.cloudburstmc.protocol.bedrock.data.BlockPropertyData;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
@@ -33,10 +32,10 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
         List<ItemDefinition> definitions = new ArrayList<>();
 
         if(player.protocol() < ProtocolVersion.MINECRAFT_PE_1_26_0.protocol()) {
-            packet.setServerId("");
-            packet.setWorldId("");
-            packet.setScenarioId("");
-            packet.setOwnerId("");
+            packet.setServerID("");
+            packet.setWorldID("");
+            packet.setScenarioID("");
+            packet.setOwnerID("");
         }
 
         if(player.protocol() < ProtocolVersion.MINECRAFT_PE_1_21_130.protocol()) {
@@ -76,20 +75,16 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
             }
         }
 
-        if(player.protocol() < ProtocolVersion.MINECRAFT_PE_1_21_90.protocol()) {
-            packet.setAuthoritativeMovementMode(AuthoritativeMovementMode.SERVER);
-        }
-
         if(player.protocol() < ProtocolVersion.MINECRAFT_PE_1_21_60.protocol()) {
             HashSet<String> modifiedIdentifiers = new HashSet<>();
             for(ItemRuntimeIdRegistry.ItemData data : ItemRuntimeIdRegistry.getITEMDATA()) {
                 CompoundTag tag = new CompoundTag();
 
-                if (ItemRegistry.getItemComponents().containsCompound(data.identifier())) {
-                    CompoundTag item_tag = ItemRegistry.getItemComponents().getCompound(data.identifier());
-                    tag.putCompound("components", item_tag.getCompound("components"));
-                }
-                else if (Registries.ITEM.getCustomItemDefinition().containsKey(data.identifier())) {
+                if (ItemRegistry.getItemComponents().containsKey(data.identifier())) {
+                    NbtMap itemTag = ItemRegistry.getItemComponents().getCompound(data.identifier());
+                    definitions.add(new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), NbtMap.builder().putCompound("components", itemTag.getCompound("components")).build()));
+                    continue;
+                } else if (Registries.ITEM.getCustomItemDefinition().containsKey(data.identifier())) {
                     tag = Registries.ITEM.getCustomItemDefinition().get(data.identifier()).nbt();
                 }
                 SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), NbtMap.fromMap(tag.parseValue()));
