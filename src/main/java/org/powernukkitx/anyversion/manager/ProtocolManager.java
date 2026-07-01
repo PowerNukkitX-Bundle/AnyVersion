@@ -144,6 +144,12 @@ public class ProtocolManager implements Listener {
                 holder.disconnect(DisconnectFailReason.OUTDATED_CLIENT);
                 return;
             }
+            int lowestVersion = AnyVersion.getPlugin().getConfiguration().getLowestVersion();
+            if (clientProtocol < lowestVersion) {
+                holder.sendPlayStatus(PlayStatus.LOGIN_FAILED_CLIENT_OLD);
+                holder.disconnect(DisconnectFailReason.OUTDATED_CLIENT);
+                return;
+            }
             if (holder.getState().equals(SessionState.REQUESTED_NETWORK_SETTINGS)) {
                 holder.disconnect(DisconnectFailReason.UNEXPECTED_PACKET);
                 return;

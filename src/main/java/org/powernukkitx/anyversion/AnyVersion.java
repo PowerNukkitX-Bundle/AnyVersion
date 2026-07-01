@@ -6,13 +6,15 @@ import lombok.Getter;
 import org.powernukkitx.anyversion.config.AnyVersionConfig;
 import org.powernukkitx.anyversion.manager.ProtocolManager;
 import org.powernukkitx.anyversion.registries.Registries;
-import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.ServerStartedListener;
 
 public class AnyVersion extends PluginBase {
 
     @Getter
     private static AnyVersion plugin;
+
+    @Getter
+    private AnyVersionConfig configuration;
 
     @Override
     public void onLoad() {
