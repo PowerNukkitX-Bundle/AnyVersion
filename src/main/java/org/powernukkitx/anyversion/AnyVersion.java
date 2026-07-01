@@ -3,6 +3,7 @@ package org.powernukkitx.anyversion;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.plugin.PluginManager;
 import lombok.Getter;
+import org.powernukkitx.anyversion.config.AnyVersionConfig;
 import org.powernukkitx.anyversion.manager.ProtocolManager;
 import org.powernukkitx.anyversion.registries.Registries;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
@@ -13,13 +14,10 @@ public class AnyVersion extends PluginBase {
     @Getter
     private static AnyVersion plugin;
 
-    public static AnyVersion getPlugin() {
-        return plugin;
-    }
-
     @Override
     public void onLoad() {
         AnyVersion.plugin = this;
+        configuration = new AnyVersionConfig();
     }
 
     @Override
