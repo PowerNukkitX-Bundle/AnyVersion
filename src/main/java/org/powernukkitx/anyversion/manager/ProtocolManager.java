@@ -12,11 +12,16 @@ import cn.nukkit.network.process.PacketHandler;
 import cn.nukkit.network.process.PacketHandlerRegistry;
 import cn.nukkit.network.process.PlayerSessionHolder;
 import cn.nukkit.network.process.SessionState;
+import cn.nukkit.network.process.auth.ClientChainData;
+import cn.nukkit.network.process.auth.ClientSkinData;
 import cn.nukkit.network.process.handler.LoginHandler;
+import cn.nukkit.event.player.PlayerPreLoginEvent;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelPipeline;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.cloudburstmc.protocol.bedrock.data.auth.PlayerAuthenticationType;
+import org.cloudburstmc.protocol.bedrock.data.skin.SerializedSkin;
 import org.cloudburstmc.protocol.bedrock.netty.codec.packet.BedrockPacketCodec;
 import org.cloudburstmc.protocol.bedrock.data.DisconnectFailReason;
 import org.cloudburstmc.protocol.bedrock.data.PacketCompressionAlgorithm;
@@ -25,6 +30,13 @@ import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket;
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket;
 import org.cloudburstmc.protocol.bedrock.packet.NetworkSettingsPacket;
 import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket;
+import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket;
+import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
+import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.jwt.consumer.JwtContext;
 import org.powernukkitx.anyversion.AnyVersion;
 import org.powernukkitx.anyversion.registries.Registries;
 import org.powernukkitx.anyversion.utils.BedrockPacketDeepCopy;
@@ -33,6 +45,8 @@ import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.security.PublicKey;
+import java.util.Locale;
 import java.util.Map;
 
 @Slf4j
@@ -174,16 +188,162 @@ public class ProtocolManager implements Listener {
 
         @Override
         public void handle(LoginPacket packet, PlayerSessionHolder holder, Server server) {
-            ProtocolVersion version = pendingVersions.remove(holder);
+            int clientProtocol = packet.getClientNetworkVersion();
+            ProtocolVersion pending = pendingVersions.remove(holder);
+            ProtocolVersion version = ProtocolVersion.has(clientProtocol) ? ProtocolVersion.get(clientProtocol) : pending;
             if (version == null) {
                 version = ProtocolVersion.getCurrent();
             }
             packet.setClientNetworkVersion(NetworkConstants.CODEC.getProtocolVersion());
-            delegate.handle(packet, holder, server);
-            if (holder.getPlayerInfo() != null && version.protocol() != NetworkConstants.CODEC.getProtocolVersion()) {
+            boolean downgraded = version.protocol() != NetworkConstants.CODEC.getProtocolVersion();
+            if (downgraded) {
+                handleLenient(packet, holder, server, version);
+            } else {
+                delegate.handle(packet, holder, server);
+            }
+            if (holder.getPlayerInfo() != null && downgraded) {
                 String xuid = holder.getPlayerInfo().getIdentityClaims().extraData.xuid;
                 players.put(xuid, new ProtocolPlayer(holder.getSession(), version.protocol()));
             }
+        }
+
+        private void handleLenient(LoginPacket packet, PlayerSessionHolder holder, Server server, ProtocolVersion version) {
+            if (!holder.getState().equals(SessionState.LOGIN)) {
+                holder.disconnect(DisconnectFailReason.UNEXPECTED_PACKET);
+                return;
+            }
+
+            final PlayerAuthenticationType type = packet.getAuthenticationType();
+            final DisconnectFailReason notAuthenticated = DisconnectFailReason.NOT_AUTHENTICATED;
+            if (type.equals(PlayerAuthenticationType.UNKNOWN)) {
+                holder.disconnect(notAuthenticated);
+                return;
+            }
+
+            final boolean xboxAuthRequired = server.getSettings().baseSettings().xboxAuth();
+            if (xboxAuthRequired && packet.getToken() == null || packet.getToken().isEmpty()) {
+                holder.disconnect(notAuthenticated);
+                return;
+            }
+
+            try {
+                final ChainValidationResult result = EncryptionUtils.validateToken(type, packet.getToken());
+                if (xboxAuthRequired && !result.signed() && !server.getSettings().baseSettings().waterdogpe()) {
+                    holder.disconnect(notAuthenticated);
+                    return;
+                }
+
+                final ChainValidationResult.IdentityClaims identityClaims = result.identityClaims();
+                final PlayerPreLoginEvent event = new PlayerPreLoginEvent(identityClaims);
+                server.getPluginManager().callEvent(event);
+                if (event.isCancelled()) {
+                    holder.disconnect(DisconnectFailReason.UNKNOWN, event.getKickMessage());
+                    return;
+                }
+
+                if (server.getOnlinePlayers().size() >= server.getMaxPlayers()) {
+                    holder.disconnect(DisconnectFailReason.SERVER_FULL);
+                    return;
+                }
+
+                if (!server.isWhitelisted(identityClaims.extraData.displayName.toLowerCase(Locale.ENGLISH))) {
+                    holder.disconnect(DisconnectFailReason.NOT_ALLOWED);
+                    return;
+                }
+
+                var banEntry = server.getNameBans().getEntires().get(identityClaims.extraData.displayName.toLowerCase(Locale.ENGLISH));
+                if (banEntry != null) {
+                    String reason = banEntry.getReason();
+                    holder.disconnect(DisconnectFailReason.UNKNOWN, !reason.isEmpty() ? "You are banned. Reason: " + reason : "You are banned");
+                    return;
+                }
+
+                final LenientClientJwt lenient = validateClientJwtLenient(packet, identityClaims.parsedIdentityPublicKey());
+                if (lenient == null) {
+                    holder.disconnect(DisconnectFailReason.INVALID_PLATFORM_SKIN);
+                    return;
+                }
+
+                if (lenient.chain.isEduMode()) {
+                    holder.sendPlayStatus(PlayStatus.LOGIN_FAILED_EDITION_MISMATCH_EDU_TO_VANILLA);
+                    holder.disconnect(DisconnectFailReason.EDITION_MISMATCH_EDU_TO_VANILLA);
+                    return;
+                }
+
+                holder.setPlayerInfo(new Player.PlayerInfo(identityClaims, lenient.chain, lenient.skin, result.signed()));
+
+                if (server.enabledNetworkEncryption) {
+                    enableEncryption(identityClaims, holder);
+                } else {
+                    holder.sendPlayStatus(PlayStatus.LOGIN_SUCCESS);
+                    holder.setState(SessionState.RESOURCE_PACK);
+                    holder.sendResourcePacksInfo(server);
+                }
+            } catch (Exception e) {
+                log.debug("Lenient login failed for protocol {}", version.protocol(), e);
+                holder.disconnect(notAuthenticated);
+            }
+        }
+
+        private LenientClientJwt validateClientJwtLenient(LoginPacket packet, PublicKey identityPublicKey) {
+            final String clientJwt = packet.getClientJwt();
+            if (clientJwt == null || clientJwt.isEmpty()) {
+                return null;
+            }
+            try {
+                final JwtContext ctx = new JwtConsumerBuilder()
+                        .setVerificationKey(identityPublicKey)
+                        .build()
+                        .process(clientJwt);
+                final JwtClaims claims = ctx.getJwtClaims();
+                padChainClaims(claims);
+
+                final ClientChainData chain = ClientChainData.from(claims);
+                final SerializedSkin skin = ClientSkinData.readSkin(claims);
+                if (chain == null || skin == null) {
+                    return null;
+                }
+                return new LenientClientJwt(chain, skin);
+            } catch (InvalidJwtException ignored) {
+            }
+            return null;
+        }
+
+        private void enableEncryption(ChainValidationResult.IdentityClaims claims, PlayerSessionHolder holder) {
+            try {
+                var session = holder.getSession();
+                var clientKey = EncryptionUtils.parseKey(claims.identityPublicKey);
+                var encryptionKeyPair = EncryptionUtils.createKeyPair();
+                var encryptionToken = EncryptionUtils.generateRandomToken();
+                var encryptionKey = EncryptionUtils.getSecretKey(encryptionKeyPair.getPrivate(), clientKey, encryptionToken);
+                var handshakeWebToken = EncryptionUtils.createHandshakeJwt(encryptionKeyPair, encryptionToken);
+                if (!holder.getSession().isConnected()) {
+                    return;
+                }
+                var pk = new ServerToClientHandshakePacket();
+                pk.setHandshakeWebToken(handshakeWebToken);
+                session.sendPacketImmediately(pk);
+                session.enableEncryption(encryptionKey);
+                holder.setState(SessionState.ENCRYPTION);
+            } catch (Exception e) {
+                holder.disconnect(DisconnectFailReason.UNKNOWN, "encryption error");
+            }
+        }
+    }
+
+    private record LenientClientJwt(ClientChainData chain, SerializedSkin skin) { }
+
+    private static void padChainClaims(JwtClaims claims) {
+        putIfAbsent(claims, "CompatibleWithClientSideChunkGen", Boolean.FALSE);
+        putIfAbsent(claims, "GraphicsMode", 0);
+        putIfAbsent(claims, "MemoryTier", 0);
+        putIfAbsent(claims, "ClientIsEditorCapable", Boolean.FALSE);
+        putIfAbsent(claims, "ClientEditorConnectionIntent", 0);
+    }
+
+    private static void putIfAbsent(JwtClaims claims, String key, Object value) {
+        if (!claims.hasClaim(key)) {
+            claims.setClaim(key, value);
         }
     }
 

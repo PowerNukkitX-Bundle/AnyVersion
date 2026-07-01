@@ -103,8 +103,7 @@ public enum ProtocolVersion {
 
     @Getter
     private static final ProtocolVersion[] versions = values();
-    @Getter
-    private static final ProtocolVersion current = findCurrent();
+    @Getter private static final ProtocolVersion current = findCurrent();
 
 
     private final int PROTOCOL;
