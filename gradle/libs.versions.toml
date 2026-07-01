@@ -1,0 +1,15 @@
+[versions]
+server = "b-migration-SNAPSHOT"
+bedrock-connection = "3.0.0.Beta7-Debug-SNAPSHOT"
+okaeri = "5.0.1"
+lombok = "1.18.42"
+shadow = "9.0.0"
+
+[libraries]
+server = { module = "org.powernukkitx:server", version.ref = "server" }
+bedrock-connection = { module = "org.powernukkitx.protocol:bedrock-connection", version.ref = "bedrock-connection" }
+okaeri-configs-core = { module = "eu.okaeri:okaeri-configs-core", version.ref = "okaeri" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
