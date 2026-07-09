@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "org.powernukkitx.anyversion"
-version = "2.8.1"
+version = "2.8.2"
 
 java {
     toolchain {
@@ -14,6 +14,12 @@ java {
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
+}
+
+tasks.processResources {
+    filesMatching("plugin.yml") {
+        expand("version" to project.version)
+    }
 }
 
 repositories {

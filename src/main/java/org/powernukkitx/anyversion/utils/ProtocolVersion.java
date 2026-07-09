@@ -100,11 +100,8 @@ public enum ProtocolVersion {
     MINECRAFT_PE_1_26_20(975, Bedrock_v975.CODEC),
     MINECRAFT_PE_1_26_30(1001, Bedrock_v1001.CODEC);
 
-
-    @Getter
     private static final ProtocolVersion[] versions = values();
-    @Getter private static final ProtocolVersion current = findCurrent();
-
+    private static final ProtocolVersion current = findCurrent();
 
     private final int PROTOCOL;
     private final BedrockCodec CODEC;

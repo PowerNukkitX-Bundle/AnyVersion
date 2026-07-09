@@ -32,6 +32,10 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
         List<ItemDefinition> definitions = new ArrayList<>();
 
         if(player.protocol() < ProtocolVersion.MINECRAFT_PE_1_26_0.protocol()) {
+            packet.getSettings().setServerId("");
+            packet.getSettings().setWorldId("");
+            packet.getSettings().setScenarioId("");
+            packet.getSettings().setOwnerId("");
             packet.setServerID("");
             packet.setWorldID("");
             packet.setScenarioID("");
