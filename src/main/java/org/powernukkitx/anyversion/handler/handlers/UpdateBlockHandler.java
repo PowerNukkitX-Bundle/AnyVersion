@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockState;
 import org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;
 import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket;
@@ -12,7 +12,7 @@ public class UpdateBlockHandler extends PacketHandler<UpdateBlockPacket> {
 
     @Override
     public void handle(ProtocolPlayer player, UpdateBlockPacket packet) {
-        BlockState current = cn.nukkit.registry.Registries.BLOCKSTATE.get(packet.getDefinition().getRuntimeId());
+        BlockState current = org.powernukkitx.registry.Registries.BLOCKSTATE.get(packet.getDefinition().getRuntimeId());
         BlockState downgraded = Registries.BLOCKSTATE.downgrade(player.getVersion(), current);
         BlockDefinition blockDefinition = new SimpleBlockDefinition(
                 downgraded.getIdentifier(),

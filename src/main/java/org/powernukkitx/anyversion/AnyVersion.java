@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion;
 
-import cn.nukkit.plugin.PluginBase;
-import cn.nukkit.plugin.PluginManager;
+import org.powernukkitx.plugin.PluginBase;
+import org.powernukkitx.plugin.PluginManager;
 import lombok.Getter;
 import org.powernukkitx.anyversion.config.AnyVersionConfig;
 import org.powernukkitx.anyversion.manager.ProtocolManager;

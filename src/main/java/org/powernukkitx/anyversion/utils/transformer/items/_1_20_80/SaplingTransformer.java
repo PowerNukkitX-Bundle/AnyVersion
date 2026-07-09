@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_20_80;
 
-import cn.nukkit.block.BlockID;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.block.BlockID;
+import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;

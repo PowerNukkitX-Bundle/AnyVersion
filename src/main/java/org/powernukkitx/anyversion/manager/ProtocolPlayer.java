@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.manager;
 
-import cn.nukkit.Player;
+import org.powernukkitx.Player;
 import org.cloudburstmc.protocol.bedrock.BedrockSession;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 

@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_20_30;
 
-import cn.nukkit.block.property.enums.Color;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.block.property.enums.Color;
+import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;
@@ -11,7 +11,7 @@ import org.powernukkitx.anyversion.utils.transformer.items.ItemDataTransformer;
 
 import java.util.Map;
 
-import static cn.nukkit.block.BlockID.WHITE_STAINED_GLASS;
+import static org.powernukkitx.block.BlockID.WHITE_STAINED_GLASS;
 
 public class StainedGlassTransformer extends ItemDataTransformer {
 

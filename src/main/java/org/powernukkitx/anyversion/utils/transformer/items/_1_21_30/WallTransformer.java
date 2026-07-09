@@ -1,8 +1,8 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_21_30;
 
-import cn.nukkit.block.property.enums.WallBlockType;
-import cn.nukkit.item.ItemID;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.block.property.enums.WallBlockType;
+import org.powernukkitx.item.ItemID;
+import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;

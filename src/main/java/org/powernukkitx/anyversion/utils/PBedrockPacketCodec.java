@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils;
 
-import cn.nukkit.network.NetworkConstants;
+import org.powernukkitx.network.NetworkConstants;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;

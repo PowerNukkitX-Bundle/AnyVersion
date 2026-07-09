@@ -4,7 +4,7 @@ package org.powernukkitx.anyversion.utils.table.entity;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
 import static org.powernukkitx.anyversion.utils.definition.EntityDefinition.*;
-import static cn.nukkit.entity.EntityID.*;
+import static org.powernukkitx.entity.EntityID.*;
 
 public class EntityTable_1_21_0 extends EntityTable {
 

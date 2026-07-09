@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils.transformer.blocks;
 
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockState;
 
 public abstract class BlockStateTransformer {
 

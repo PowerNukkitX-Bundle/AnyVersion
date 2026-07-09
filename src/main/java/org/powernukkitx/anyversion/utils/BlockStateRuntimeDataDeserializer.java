@@ -1,8 +1,8 @@
 package org.powernukkitx.anyversion.utils;
 
-import cn.nukkit.block.BlockState;
-import cn.nukkit.level.format.palette.RuntimeDataDeserializer;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.block.BlockState;
+import org.powernukkitx.level.format.palette.RuntimeDataDeserializer;
+import org.powernukkitx.registry.Registries;
 
 public class BlockStateRuntimeDataDeserializer implements RuntimeDataDeserializer<BlockState> {
     @Override

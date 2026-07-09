@@ -4,8 +4,8 @@ import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.transformer.items._1_20_70.*;
 
 
-import static cn.nukkit.item.ItemID.*;
-import static cn.nukkit.tags.BlockTags.GRASS;
+import static org.powernukkitx.item.ItemID.*;
+import static org.powernukkitx.tags.BlockTags.GRASS;
 import static org.powernukkitx.anyversion.utils.definition.ItemDefinition.of;
 
 public class ItemDataTable_1_20_70 extends ItemTable {

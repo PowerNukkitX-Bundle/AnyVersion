@@ -5,7 +5,7 @@ import org.powernukkitx.anyversion.utils.transformer.items._1_21_30.PurpurTransf
 import org.powernukkitx.anyversion.utils.transformer.items._1_21_30.SpongeTransformer;
 import org.powernukkitx.anyversion.utils.transformer.items._1_21_30.WallTransformer;
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 import static org.powernukkitx.anyversion.utils.definition.ItemDefinition.of;
 
 public class ItemDataTable_1_21_30 extends ItemTable {

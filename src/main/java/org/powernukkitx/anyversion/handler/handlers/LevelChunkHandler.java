@@ -1,9 +1,9 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.block.BlockAir;
-import cn.nukkit.block.BlockState;
-import cn.nukkit.level.format.palette.BlockPalette;
-import cn.nukkit.level.format.palette.Palette;
+import org.powernukkitx.block.BlockAir;
+import org.powernukkitx.block.BlockState;
+import org.powernukkitx.level.format.palette.BlockPalette;
+import org.powernukkitx.level.format.palette.Palette;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.SneakyThrows;

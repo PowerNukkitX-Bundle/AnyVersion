@@ -6,7 +6,7 @@ import org.powernukkitx.anyversion.utils.transformer.blocks._1_19_80.NewLogTrans
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_19_80.OldLogTransformer;
 
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 import static org.powernukkitx.anyversion.utils.transformer.blocks._1_19_80.UpdateTransformer.of;
 
 public class BlockStateTable_1_19_80 extends BlockStateTable {

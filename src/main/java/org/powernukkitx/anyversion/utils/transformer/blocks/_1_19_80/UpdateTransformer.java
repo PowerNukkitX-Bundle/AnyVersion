@@ -1,11 +1,11 @@
 package org.powernukkitx.anyversion.utils.transformer.blocks._1_19_80;
 
-import cn.nukkit.block.BlockProperties;
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockProperties;
+import org.powernukkitx.block.BlockState;
 import org.powernukkitx.anyversion.utils.definition.BlockStateDefinition;
 import org.powernukkitx.anyversion.utils.transformer.blocks.BlockStateTransformer;
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 
 public class UpdateTransformer extends BlockStateTransformer {
 

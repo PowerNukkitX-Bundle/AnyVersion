@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_21_30;
 
-import cn.nukkit.block.BlockID;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.block.BlockID;
+import org.powernukkitx.registry.Registries;
 import lombok.extern.slf4j.Slf4j;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
@@ -12,7 +12,7 @@ import org.powernukkitx.anyversion.utils.transformer.items.ItemDataTransformer;
 
 import java.util.Map;
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 
 @Slf4j
 public class SpongeTransformer extends ItemDataTransformer {

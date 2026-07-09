@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils.palette;
 
-import cn.nukkit.block.*;
+import org.powernukkitx.block.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.cloudburstmc.nbt.NbtMap;
@@ -13,7 +13,7 @@ import org.powernukkitx.anyversion.utils.definition.LegacyBlockDefinition;
 import java.io.IOException;
 import java.util.Map;
 
-import static cn.nukkit.block.BlockID.INFO_UPDATE;
+import static org.powernukkitx.block.BlockID.INFO_UPDATE;
 
 public class LegacyBlockPalette extends BlockPalette {
 

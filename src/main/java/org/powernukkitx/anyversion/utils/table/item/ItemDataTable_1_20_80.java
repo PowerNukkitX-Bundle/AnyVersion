@@ -5,7 +5,7 @@ import org.powernukkitx.anyversion.utils.transformer.items._1_20_80.CoralFanTran
 import org.powernukkitx.anyversion.utils.transformer.items._1_20_80.RedFlowerTransformer;
 import org.powernukkitx.anyversion.utils.transformer.items._1_20_80.SaplingTransformer;
 
-import static cn.nukkit.item.ItemID.*;
+import static org.powernukkitx.item.ItemID.*;
 import static org.powernukkitx.anyversion.utils.definition.ItemDefinition.of;
 
 public class ItemDataTable_1_20_80 extends ItemTable {

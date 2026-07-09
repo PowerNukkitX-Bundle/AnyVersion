@@ -4,7 +4,7 @@ import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_21_30.*;
 
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 import static org.powernukkitx.anyversion.utils.definition.BlockStateDefinition.of;
 
 public class BlockStateTable_1_21_30 extends BlockStateTable {

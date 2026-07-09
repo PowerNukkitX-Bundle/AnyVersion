@@ -1,11 +1,11 @@
 package org.powernukkitx.anyversion.utils.transformer.blocks._1_21_20;
 
-import cn.nukkit.block.BlockProperties;
-import cn.nukkit.block.BlockState;
-import cn.nukkit.block.property.CommonBlockProperties;
+import org.powernukkitx.block.BlockProperties;
+import org.powernukkitx.block.BlockState;
+import org.powernukkitx.block.property.CommonBlockProperties;
 import org.powernukkitx.anyversion.utils.transformer.blocks.BlockStateTransformer;
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 
 public class CoralFanHangTransformer extends BlockStateTransformer {
 

@@ -2,7 +2,7 @@ package org.powernukkitx.anyversion.utils.table.item;
 
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
-import static cn.nukkit.item.ItemID.*;
+import static org.powernukkitx.item.ItemID.*;
 import static org.powernukkitx.anyversion.utils.definition.ItemDefinition.of;
 
 public class ItemDataTable_1_21_50 extends ItemTable {

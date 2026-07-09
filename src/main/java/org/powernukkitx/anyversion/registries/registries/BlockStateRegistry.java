@@ -1,8 +1,8 @@
 package org.powernukkitx.anyversion.registries.registries;
 
-import cn.nukkit.block.BlockState;
-import cn.nukkit.block.BlockStateImpl;
-import cn.nukkit.block.property.type.BlockPropertyType;
+import org.powernukkitx.block.BlockState;
+import org.powernukkitx.block.BlockStateImpl;
+import org.powernukkitx.block.property.type.BlockPropertyType;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;

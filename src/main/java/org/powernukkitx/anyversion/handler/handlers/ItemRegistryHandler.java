@@ -1,8 +1,8 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.nbt.tag.*;
-import cn.nukkit.registry.ItemRuntimeIdRegistry;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.nbt.tag.*;
+import org.powernukkitx.registry.ItemRuntimeIdRegistry;
+import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.*;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;

@@ -5,7 +5,7 @@ import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_10.ConcreteTra
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_10.ObserverTransformer;
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_10.ShulkerBoxTransformer;
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 import static org.powernukkitx.anyversion.utils.definition.BlockStateDefinition.of;
 
 public class BlockStateTable_1_20_10 extends BlockStateTable {

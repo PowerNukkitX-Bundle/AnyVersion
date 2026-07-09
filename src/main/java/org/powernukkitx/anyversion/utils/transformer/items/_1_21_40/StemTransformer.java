@@ -9,7 +9,7 @@ import org.powernukkitx.anyversion.utils.transformer.items.ItemDataTransformer;
 
 import java.util.Map;
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 
 public class StemTransformer extends ItemDataTransformer {
 

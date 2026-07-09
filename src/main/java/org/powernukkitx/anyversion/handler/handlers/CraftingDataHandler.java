@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.item.Item;
+import org.powernukkitx.item.Item;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
@@ -46,9 +46,9 @@ public class CraftingDataHandler extends PacketHandler<CraftingDataPacket> {
                     result = ShapedRecipe.of(shaped.getType(), shaped.getRecipeUniqueId(), shaped.getRecipeWidth(), shaped.getRecipeHeight(), ingredients, results, shaped.getRecipeID(), shaped.getRecipeTag(), shaped.getPriority(), shaped.getNetId(), shaped.isAssumeSymmetry(), shaped.getUnlockingRequirement());
                 } else if (data instanceof ShapelessRecipe shapeless) {
                     if (FURNACE_TAGS.contains(shapeless.getRecipeTag()) && player.getVersion().protocol() < ProtocolVersion.MINECRAFT_PE_1_26_20.protocol()) {
-                        int inputId = cn.nukkit.registry.Registries.ITEM_RUNTIMEID.getInt(ingredients.getFirst().toItem().getDefinition().getIdentifier());
+                        int inputId = org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getInt(ingredients.getFirst().toItem().getDefinition().getIdentifier());
                         ItemData resultItem = data.getProductionList().getFirst();
-                        Item item = Item.get(cn.nukkit.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
+                        Item item = Item.get(org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
                         if (item == null) continue recipe;
                         ItemData itemData = ItemData.builder().definition(new SimpleItemDefinition(item.getId(), item.getRuntimeId(), false)).build();
                         ItemData downgrade = Registries.ITEM.downgrade(player.getVersion(), itemData);
@@ -65,7 +65,7 @@ public class CraftingDataHandler extends PacketHandler<CraftingDataPacket> {
                 int inputId = data.getInputId();
                 int damage = data.getInputData();
                 ItemData resultItem = data.getResultItem();
-                Item item = Item.get(cn.nukkit.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
+                Item item = Item.get(org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
                 if (item == null) continue recipe;
                 ItemData itemData = ItemData.builder().definition(new SimpleItemDefinition(item.getId(), item.getRuntimeId(), false)).build();
                 ItemData downgrade = Registries.ITEM.downgrade(player.getVersion(), itemData);

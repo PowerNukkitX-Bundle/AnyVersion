@@ -3,7 +3,7 @@ package org.powernukkitx.anyversion.config;
 import lombok.Getter;
 import org.powernukkitx.anyversion.AnyVersion;
 
-import cn.nukkit.utils.Config;
+import org.powernukkitx.utils.Config;
 
 import java.util.Map;
 

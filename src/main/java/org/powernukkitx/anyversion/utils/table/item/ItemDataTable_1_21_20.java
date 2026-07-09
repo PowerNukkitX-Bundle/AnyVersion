@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.table.item;
 
-import cn.nukkit.block.BlockID;
-import cn.nukkit.item.ItemID;
+import org.powernukkitx.block.BlockID;
+import org.powernukkitx.item.ItemID;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.transformer.items.UnknownItemTransformer;
 import org.powernukkitx.anyversion.utils.transformer.items._1_21_0.StoneBlockSlabTransformer;
@@ -9,7 +9,7 @@ import org.powernukkitx.anyversion.utils.transformer.items._1_21_20.*;
 
 
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 import static org.powernukkitx.anyversion.utils.definition.ItemDefinition.of;
 import static org.powernukkitx.anyversion.utils.transformer.blocks._1_21_20.StoneBrickTransformer.STONEBRICK;
 import static org.powernukkitx.anyversion.utils.transformer.blocks._1_21_20.LightBlockTransformer.LIGHT_BLOCK;

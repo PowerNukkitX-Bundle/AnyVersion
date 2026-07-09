@@ -1,14 +1,14 @@
 package org.powernukkitx.anyversion.utils.transformer.blocks._1_19_80;
 
-import cn.nukkit.block.BlockProperties;
-import cn.nukkit.block.BlockState;
-import cn.nukkit.block.property.CommonBlockProperties;
-import cn.nukkit.block.property.enums.NewLogType;
-import cn.nukkit.block.property.type.EnumPropertyType;
+import org.powernukkitx.block.BlockProperties;
+import org.powernukkitx.block.BlockState;
+import org.powernukkitx.block.property.CommonBlockProperties;
+import org.powernukkitx.block.property.enums.NewLogType;
+import org.powernukkitx.block.property.type.EnumPropertyType;
 import org.powernukkitx.anyversion.utils.transformer.blocks.BlockStateTransformer;
 
-import static cn.nukkit.block.BlockID.*;
-import static cn.nukkit.item.ItemID.LOG;
+import static org.powernukkitx.block.BlockID.*;
+import static org.powernukkitx.item.ItemID.LOG;
 
 public class NewLogTransformer extends BlockStateTransformer {
 

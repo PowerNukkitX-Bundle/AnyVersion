@@ -1,8 +1,8 @@
 package org.powernukkitx.anyversion.utils.transformer.items;
 
-import cn.nukkit.block.Block;
-import cn.nukkit.block.BlockID;
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.Block;
+import org.powernukkitx.block.BlockID;
+import org.powernukkitx.block.BlockState;
 import lombok.RequiredArgsConstructor;
 import org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition;
 import org.cloudburstmc.nbt.NbtMap;
@@ -27,7 +27,7 @@ public class ItemBlockTransformer extends ItemDataTransformer {
             if(state == null) throw new RuntimeException(original.getDefinition().getIdentifier() + " has no SimpleBlockDefinition!");
             blockDefinition = new SimpleBlockDefinition(state.getIdentifier(), state.blockStateHash(), state.getBlockStateTag());
         }
-        BlockState originalBlockState = cn.nukkit.registry.Registries.BLOCKSTATE.get(blockDefinition.getRuntimeId());
+        BlockState originalBlockState = org.powernukkitx.registry.Registries.BLOCKSTATE.get(blockDefinition.getRuntimeId());
         if(originalBlockState == null) originalBlockState = Block.get(original.getDefinition().getIdentifier()).getProperties().getDefaultState();
         if(originalBlockState == null) return Registries.ITEM.getOutdated(original);
         BlockState downgraded = Registries.BLOCKSTATE.downgrade(version, BlockStateRegistry.clone(originalBlockState), true, Integer.MAX_VALUE);
@@ -38,7 +38,7 @@ public class ItemBlockTransformer extends ItemDataTransformer {
                 downgraded.getBlockStateTag()
         );
         ItemDefinition originalItemDefinition = original.getDefinition();
-        int runtimeId = cn.nukkit.registry.Registries.ITEM_RUNTIMEID.getInt(downgraded.getIdentifier());
+        int runtimeId = org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getInt(downgraded.getIdentifier());
         if (runtimeId == -1) {
             runtimeId = originalItemDefinition.getRuntimeId();
         }

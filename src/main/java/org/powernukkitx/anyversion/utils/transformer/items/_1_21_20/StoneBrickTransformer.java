@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_21_20;
 
-import cn.nukkit.block.property.enums.StoneBrickType;
+import org.powernukkitx.block.property.enums.StoneBrickType;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;

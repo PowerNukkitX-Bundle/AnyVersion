@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils;
 
-import cn.nukkit.level.format.palette.RuntimeDataDeserializer;
+import org.powernukkitx.level.format.palette.RuntimeDataDeserializer;
 
 public class IntegerRuntimeDataDeserializer implements RuntimeDataDeserializer<Integer> {
     @Override

@@ -1,9 +1,9 @@
 package org.powernukkitx.anyversion.utils;
 
-import cn.nukkit.nbt.tag.CompoundTag;
-import cn.nukkit.registry.ItemRegistry;
-import cn.nukkit.registry.ItemRuntimeIdRegistry;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.nbt.tag.CompoundTag;
+import org.powernukkitx.registry.ItemRegistry;
+import org.powernukkitx.registry.ItemRuntimeIdRegistry;
+import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.*;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemVersion;

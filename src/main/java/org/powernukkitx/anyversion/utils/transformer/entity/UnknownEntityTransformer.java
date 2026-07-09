@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils.transformer.entity;
 
-import cn.nukkit.entity.EntityID;
+import org.powernukkitx.entity.EntityID;
 import org.cloudburstmc.protocol.bedrock.data.actor.ActorDataTypes;
 import org.cloudburstmc.protocol.bedrock.packet.AddActorPacket;
 

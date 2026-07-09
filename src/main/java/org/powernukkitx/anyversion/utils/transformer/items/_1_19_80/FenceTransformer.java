@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_19_80;
 
-import cn.nukkit.block.property.enums.WoodType;
+import org.powernukkitx.block.property.enums.WoodType;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.nbt.NbtMapBuilder;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;

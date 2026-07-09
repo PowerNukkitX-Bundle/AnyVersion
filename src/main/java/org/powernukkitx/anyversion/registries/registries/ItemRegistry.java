@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.registries.registries;
 
-import cn.nukkit.block.*;
+import org.powernukkitx.block.*;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import lombok.extern.slf4j.Slf4j;
@@ -64,11 +64,11 @@ public class ItemRegistry extends Registry {
         if(data.getDefinition().getIdentifier().equalsIgnoreCase(BlockID.BARRIER)) {
             return data;
         }
-        if(cn.nukkit.registry.Registries.ITEM.getCustomItemDefinition().containsKey(data.getDefinition().getIdentifier())) {
+        if(org.powernukkitx.registry.Registries.ITEM.getCustomItemDefinition().containsKey(data.getDefinition().getIdentifier())) {
             return data;
         }
         ItemData finalData = data;
-        if(cn.nukkit.registry.Registries.BLOCK.getCustomBlockDefinitionList().stream().anyMatch(b -> b.identifier().equals(finalData.getDefinition().getIdentifier()))) {
+        if(org.powernukkitx.registry.Registries.BLOCK.getCustomBlockDefinitionList().stream().anyMatch(b -> b.identifier().equals(finalData.getDefinition().getIdentifier()))) {
             return data;
         }
         SimpleItemDefinition stateDefinition = (SimpleItemDefinition) data.getDefinition();
@@ -78,7 +78,7 @@ public class ItemRegistry extends Registry {
         if(usedDefinitions.isEmpty()) {
             if(blockState.getIdentifier().equals(BlockID.AIR)) {
                 if (blockDefinition != null) {
-                    blockState = cn.nukkit.registry.Registries.BLOCKSTATE.get(blockDefinition.getRuntimeId());
+                    blockState = org.powernukkitx.registry.Registries.BLOCKSTATE.get(blockDefinition.getRuntimeId());
                 }
                 if (blockState == null || blockState.getIdentifier().equals(BlockID.AIR)) {
                     Block block = Block.get(stateDefinition.getIdentifier());
@@ -158,7 +158,7 @@ public class ItemRegistry extends Registry {
     }
 
     public ItemData getOutdated(ItemData original) {
-        SimpleItemDefinition itemDefinition = new SimpleItemDefinition(BlockID.BARRIER, cn.nukkit.registry.Registries.ITEM_RUNTIMEID.getInt(BlockID.BARRIER), ItemVersion.NONE, false, NbtMap.EMPTY);
+        SimpleItemDefinition itemDefinition = new SimpleItemDefinition(BlockID.BARRIER, org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getInt(BlockID.BARRIER), ItemVersion.NONE, false, NbtMap.EMPTY);
         NbtMap nbtData = NbtMap.builder()
                 .putInt("RepairCost", 0)
                 .putCompound("display", NbtMap.builder().putString("Name", "§c%updateScreen.title: " + original.getDefinition().getIdentifier()).build())

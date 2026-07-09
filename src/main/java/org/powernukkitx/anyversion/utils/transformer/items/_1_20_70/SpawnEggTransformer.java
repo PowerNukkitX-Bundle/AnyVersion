@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_20_70;
 
-import cn.nukkit.item.ItemID;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.item.ItemID;
+import org.powernukkitx.registry.Registries;
 import lombok.RequiredArgsConstructor;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;

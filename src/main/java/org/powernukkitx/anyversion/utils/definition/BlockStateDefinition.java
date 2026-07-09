@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils.definition;
 
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockState;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -4,7 +4,7 @@ import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.transformer.items._1_19_80.FenceTransformer;
 
 import static org.powernukkitx.anyversion.utils.definition.ItemDefinition.of;
-import static cn.nukkit.item.ItemID.*;
+import static org.powernukkitx.item.ItemID.*;
 
 public class ItemDataTable_1_19_80 extends ItemTable {
 

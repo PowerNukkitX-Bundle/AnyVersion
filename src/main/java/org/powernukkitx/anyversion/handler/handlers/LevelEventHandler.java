@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.block.BlockState;
-import cn.nukkit.block.BlockStateImpl;
+import org.powernukkitx.block.BlockState;
+import org.powernukkitx.block.BlockStateImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.cloudburstmc.protocol.bedrock.data.LevelEvent;
 import org.cloudburstmc.protocol.bedrock.packet.LevelEventPacket;
@@ -15,7 +15,7 @@ public class LevelEventHandler extends PacketHandler<LevelEventPacket> {
     @Override
     public void handle(ProtocolPlayer player, LevelEventPacket packet) {
         if(packet.getType() == LevelEvent.PARTICLE_DESTROY_BLOCK) {
-            BlockState origen = cn.nukkit.registry.Registries.BLOCKSTATE.get(packet.getData());
+            BlockState origen = org.powernukkitx.registry.Registries.BLOCKSTATE.get(packet.getData());
             BlockStateImpl downgraded = (BlockStateImpl) Registries.BLOCKSTATE.downgrade(player.getVersion(), origen);
             packet.setData(Registries.BLOCKPALETTE.getRuntimeId(player.getVersion(), downgraded));
         }

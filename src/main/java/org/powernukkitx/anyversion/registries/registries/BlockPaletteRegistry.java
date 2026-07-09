@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.registries.registries;
 
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockState;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.palette.BlockHashBlockPalette;

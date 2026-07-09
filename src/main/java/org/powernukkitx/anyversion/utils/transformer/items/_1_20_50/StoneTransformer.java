@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_20_50;
 
-import cn.nukkit.block.property.enums.StoneType;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.block.property.enums.StoneType;
+import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;
@@ -11,7 +11,7 @@ import org.powernukkitx.anyversion.utils.transformer.items.ItemDataTransformer;
 
 import java.util.Map;
 
-import static cn.nukkit.block.BlockID.STONE;
+import static org.powernukkitx.block.BlockID.STONE;
 
 public class StoneTransformer extends ItemDataTransformer {
 

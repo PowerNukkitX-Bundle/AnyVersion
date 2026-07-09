@@ -1,10 +1,10 @@
 package org.powernukkitx.anyversion.utils.transformer.blocks._1_21_110;
 
-import cn.nukkit.block.BlockProperties;
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockProperties;
+import org.powernukkitx.block.BlockState;
 import org.powernukkitx.anyversion.utils.transformer.blocks.BlockStateTransformer;
 
-import static cn.nukkit.block.property.CommonBlockProperties.PILLAR_AXIS;
+import static org.powernukkitx.block.property.CommonBlockProperties.PILLAR_AXIS;
 
 public class IronChainTransformer extends BlockStateTransformer {
 

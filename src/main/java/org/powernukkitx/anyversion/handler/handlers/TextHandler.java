@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.Server;
+import org.powernukkitx.Server;
 import org.cloudburstmc.protocol.bedrock.data.TextPacketType;
 import org.cloudburstmc.protocol.bedrock.data.payload.text.MessageAndParams;
 import org.cloudburstmc.protocol.bedrock.data.payload.text.MessageOnly;

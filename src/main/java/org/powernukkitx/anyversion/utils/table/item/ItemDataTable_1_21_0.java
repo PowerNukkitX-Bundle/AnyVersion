@@ -4,7 +4,7 @@ import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.transformer.items._1_21_0.*;
 
 
-import static cn.nukkit.item.ItemID.*;
+import static org.powernukkitx.item.ItemID.*;
 import static org.powernukkitx.anyversion.utils.definition.ItemDefinition.of;
 
 public class ItemDataTable_1_21_0 extends ItemTable {

@@ -6,8 +6,8 @@ import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_80.DeadCoralFa
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_80.SaplingTransformer;
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_80.RedFlowerTransformer;
 
-import static cn.nukkit.block.BlockID.*;
-import static cn.nukkit.block.BlockID.DEAD_FIRE_CORAL_FAN;
+import static org.powernukkitx.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.DEAD_FIRE_CORAL_FAN;
 import static org.powernukkitx.anyversion.utils.definition.BlockStateDefinition.of;
 
 public class BlockStateTable_1_20_80 extends BlockStateTable {

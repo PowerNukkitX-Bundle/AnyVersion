@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.block.BlockID;
+import org.powernukkitx.block.BlockID;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.InventoryContentPacket;

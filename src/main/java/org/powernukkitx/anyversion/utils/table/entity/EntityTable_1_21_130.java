@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.table.entity;
 
 
-import cn.nukkit.entity.EntityID;
+import org.powernukkitx.entity.EntityID;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
 import static org.powernukkitx.anyversion.utils.definition.EntityDefinition.of;

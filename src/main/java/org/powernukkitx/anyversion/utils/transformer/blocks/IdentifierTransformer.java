@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.transformer.blocks;
 
-import cn.nukkit.block.BlockProperties;
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockProperties;
+import org.powernukkitx.block.BlockState;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

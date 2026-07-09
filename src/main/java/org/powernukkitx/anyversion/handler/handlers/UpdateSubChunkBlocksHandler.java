@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockState;
 import org.cloudburstmc.protocol.bedrock.data.BlockChangeEntry;
 import org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;
@@ -18,7 +18,7 @@ public class UpdateSubChunkBlocksHandler extends PacketHandler<UpdateSubChunkBlo
         List<BlockChangeEntry> entries = new ArrayList<>(packet.getStandardBlocks());
         packet.getStandardBlocks().clear();
         for (BlockChangeEntry entry : entries) {
-            BlockState current = cn.nukkit.registry.Registries.BLOCKSTATE.get(entry.getDefinition().getRuntimeId());
+            BlockState current = org.powernukkitx.registry.Registries.BLOCKSTATE.get(entry.getDefinition().getRuntimeId());
             BlockState downgraded = Registries.BLOCKSTATE.downgrade(player.getVersion(), current);
             BlockDefinition blockDefinition = new SimpleBlockDefinition(
                     downgraded.getIdentifier(),

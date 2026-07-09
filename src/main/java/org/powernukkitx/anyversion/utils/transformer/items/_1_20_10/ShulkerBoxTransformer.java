@@ -1,7 +1,7 @@
 package org.powernukkitx.anyversion.utils.transformer.items._1_20_10;
 
-import cn.nukkit.block.property.enums.Color;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.block.property.enums.Color;
+import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;
@@ -11,7 +11,7 @@ import org.powernukkitx.anyversion.utils.transformer.items.ItemDataTransformer;
 
 import java.util.Map;
 
-import static cn.nukkit.block.BlockID.WHITE_SHULKER_BOX;
+import static org.powernukkitx.block.BlockID.WHITE_SHULKER_BOX;
 
 public class ShulkerBoxTransformer extends ItemDataTransformer {
 

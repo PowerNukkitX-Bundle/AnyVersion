@@ -7,7 +7,7 @@ import org.powernukkitx.anyversion.utils.transformer.blocks._1_21_0.StoneBlockSl
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_21_0.TallgrassTransformer;
 
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 import static org.powernukkitx.anyversion.utils.definition.BlockStateDefinition.of;
 
 public class BlockStateTable_1_21_0 extends BlockStateTable {

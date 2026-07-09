@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils.palette;
 
-import cn.nukkit.block.BlockState;
+import org.powernukkitx.block.BlockState;
 import lombok.Getter;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 

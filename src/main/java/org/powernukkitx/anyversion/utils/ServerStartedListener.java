@@ -1,8 +1,8 @@
 package org.powernukkitx.anyversion.utils;
 
-import cn.nukkit.event.EventHandler;
-import cn.nukkit.event.Listener;
-import cn.nukkit.event.server.ServerStartedEvent;
+import org.powernukkitx.event.EventHandler;
+import org.powernukkitx.event.Listener;
+import org.powernukkitx.event.server.ServerStartedEvent;
 
 public class ServerStartedListener implements Listener {
 

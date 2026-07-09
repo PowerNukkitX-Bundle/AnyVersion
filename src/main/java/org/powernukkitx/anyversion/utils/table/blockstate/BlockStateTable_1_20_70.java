@@ -5,8 +5,8 @@ import org.powernukkitx.anyversion.utils.transformer.blocks.IdentifierTransforme
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_70.*;
 
 
-import static cn.nukkit.block.BlockID.*;
-import static cn.nukkit.tags.BlockTags.GRASS;
+import static org.powernukkitx.block.BlockID.*;
+import static org.powernukkitx.tags.BlockTags.GRASS;
 import static org.powernukkitx.anyversion.utils.definition.BlockStateDefinition.of;
 
 public class BlockStateTable_1_20_70 extends BlockStateTable {

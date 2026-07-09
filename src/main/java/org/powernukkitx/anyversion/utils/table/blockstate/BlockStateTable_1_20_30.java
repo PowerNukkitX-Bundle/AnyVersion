@@ -5,9 +5,9 @@ import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_30.*;
 
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_20_40.FacingToCardinalTransformer;
 
-import static cn.nukkit.block.BlockID.*;
-import static cn.nukkit.item.ItemID.STONE_BLOCK_SLAB;
-import static cn.nukkit.item.ItemID.WOODEN_SLAB;
+import static org.powernukkitx.block.BlockID.*;
+import static org.powernukkitx.item.ItemID.STONE_BLOCK_SLAB;
+import static org.powernukkitx.item.ItemID.WOODEN_SLAB;
 import static org.powernukkitx.anyversion.utils.definition.BlockStateDefinition.of;
 import static org.powernukkitx.anyversion.utils.transformer.blocks._1_20_70.DoubleWoodenSlabTransformer.DOUBLE_WOODEN_SLAB;
 

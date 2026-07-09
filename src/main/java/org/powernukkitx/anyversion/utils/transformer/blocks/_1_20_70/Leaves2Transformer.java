@@ -1,13 +1,13 @@
 package org.powernukkitx.anyversion.utils.transformer.blocks._1_20_70;
 
-import cn.nukkit.block.BlockProperties;
-import cn.nukkit.block.BlockState;
-import cn.nukkit.block.property.CommonBlockProperties;
-import cn.nukkit.block.property.enums.NewLeafType;
+import org.powernukkitx.block.BlockProperties;
+import org.powernukkitx.block.BlockState;
+import org.powernukkitx.block.property.CommonBlockProperties;
+import org.powernukkitx.block.property.enums.NewLeafType;
 import org.powernukkitx.anyversion.utils.transformer.blocks.BlockStateTransformer;
 
-import static cn.nukkit.block.BlockID.*;
-import static cn.nukkit.item.ItemID.LEAVES2;
+import static org.powernukkitx.block.BlockID.*;
+import static org.powernukkitx.item.ItemID.LEAVES2;
 
 public class Leaves2Transformer extends BlockStateTransformer {
 

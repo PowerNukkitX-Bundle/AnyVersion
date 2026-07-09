@@ -1,14 +1,14 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
-import cn.nukkit.block.customblock.CustomBlockDefinition;
-import cn.nukkit.math.NukkitMath;
-import cn.nukkit.math.Vector3;
-import cn.nukkit.nbt.tag.CompoundTag;
-import cn.nukkit.nbt.tag.FloatTag;
-import cn.nukkit.nbt.tag.ListTag;
-import cn.nukkit.registry.ItemRegistry;
-import cn.nukkit.registry.ItemRuntimeIdRegistry;
-import cn.nukkit.registry.Registries;
+import org.powernukkitx.block.customblock.CustomBlockDefinition;
+import org.powernukkitx.math.NukkitMath;
+import org.powernukkitx.math.Vector3;
+import org.powernukkitx.nbt.tag.CompoundTag;
+import org.powernukkitx.nbt.tag.FloatTag;
+import org.powernukkitx.nbt.tag.ListTag;
+import org.powernukkitx.registry.ItemRegistry;
+import org.powernukkitx.registry.ItemRuntimeIdRegistry;
+import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.BlockPropertyData;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;

@@ -1,11 +1,11 @@
 package org.powernukkitx.anyversion.utils.table.item;
 
-import cn.nukkit.block.BlockID;
+import org.powernukkitx.block.BlockID;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 import org.powernukkitx.anyversion.utils.transformer.items._1_21_40.SkullTransformer;
 import org.powernukkitx.anyversion.utils.transformer.items._1_21_40.StemTransformer;
 
-import static cn.nukkit.item.ItemID.*;
+import static org.powernukkitx.item.ItemID.*;
 import static org.powernukkitx.anyversion.utils.definition.ItemDefinition.of;
 
 public class ItemDataTable_1_21_40 extends ItemTable {

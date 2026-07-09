@@ -5,7 +5,7 @@ import org.powernukkitx.anyversion.utils.transformer.blocks._1_21_60.CreakingHea
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_21_60.DoorTransformer;
 import org.powernukkitx.anyversion.utils.transformer.blocks._1_21_60.FenceGateTransformer;
 
-import static cn.nukkit.block.BlockID.*;
+import static org.powernukkitx.block.BlockID.*;
 import static org.powernukkitx.anyversion.utils.definition.BlockStateDefinition.of;
 
 public class BlockStateTable_1_21_60 extends BlockStateTable {

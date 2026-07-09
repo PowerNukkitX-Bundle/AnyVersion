@@ -1,6 +1,6 @@
 package org.powernukkitx.anyversion.utils;
 
-import cn.nukkit.network.NetworkConstants;
+import org.powernukkitx.network.NetworkConstants;
 import lombok.Getter;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;

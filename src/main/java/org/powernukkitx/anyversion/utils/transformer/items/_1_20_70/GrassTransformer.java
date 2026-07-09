@@ -5,7 +5,7 @@ import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.powernukkitx.anyversion.utils.transformer.items.ItemDataTransformer;
 
-import static cn.nukkit.tags.BlockTags.GRASS;
+import static org.powernukkitx.tags.BlockTags.GRASS;
 
 public class GrassTransformer extends ItemDataTransformer {
 
