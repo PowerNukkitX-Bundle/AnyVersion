@@ -16,6 +16,7 @@ import org.powernukkitx.network.process.auth.ClientChainData;
 import org.powernukkitx.network.process.auth.ClientSkinData;
 import org.powernukkitx.network.process.handler.LoginHandler;
 import org.powernukkitx.event.player.PlayerPreLoginEvent;
+import org.powernukkitx.utils.SkinUtils;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelPipeline;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -133,7 +134,6 @@ public class ProtocolManager implements Listener {
             int clientProtocol = packet.getClientNetworkVersion();
             int serverProtocol = NetworkConstants.CODEC.getProtocolVersion();
             ProtocolVersion version = ProtocolVersion.has(clientProtocol) ? ProtocolVersion.get(clientProtocol) : null;
-
             if (clientProtocol > serverProtocol) {
                 holder.sendPlayStatus(PlayStatus.LOGIN_FAILED_SERVER_OLD);
                 holder.disconnect(DisconnectFailReason.OUTDATED_SERVER);
@@ -320,9 +320,26 @@ public class ProtocolManager implements Listener {
                 final JwtClaims claims = ctx.getJwtClaims();
                 padChainClaims(claims);
 
-                final ClientChainData chain = ClientChainData.from(claims);
-                final SerializedSkin skin = ClientSkinData.readSkin(claims);
-                if (chain == null || skin == null) {
+                final ClientChainData chain;
+                try {
+                    chain = ClientChainData.from(claims);
+                } catch (RuntimeException e) {
+                    return null;
+                }
+                if (chain == null) {
+                    return null;
+                }
+
+                final SerializedSkin skin;
+                try {
+                    skin = ClientSkinData.readSkin(claims);
+                } catch (RuntimeException e) {
+                    return null;
+                }
+                if (skin == null) {
+                    return null;
+                }
+                if (!SkinUtils.isValid(skin)) {
                     return null;
                 }
                 return new LenientClientJwt(chain, skin);
@@ -358,9 +375,24 @@ public class ProtocolManager implements Listener {
     private static void padChainClaims(JwtClaims claims) {
         putIfAbsent(claims, "CompatibleWithClientSideChunkGen", Boolean.FALSE);
         putIfAbsent(claims, "GraphicsMode", 0);
+        putIfAbsent(claims, "MaxViewDistance", 0);
         putIfAbsent(claims, "MemoryTier", 0);
+        putIfAbsent(claims, "PlatformType", inferPlatformType(claims));
         putIfAbsent(claims, "ClientIsEditorCapable", Boolean.FALSE);
         putIfAbsent(claims, "ClientEditorConnectionIntent", 0);
+    }
+
+    private static int inferPlatformType(JwtClaims claims) {
+        final Object deviceOS = claims.getClaimValue("DeviceOS");
+        if (!(deviceOS instanceof Number number)) {
+            return 0;
+        }
+
+        return switch (number.intValue()) {
+            case 1, 2, 4 -> 2; // Android, iOS, Amazon
+            case 7, 8, 9 -> 1; // PlayStation, Switch, Xbox
+            default -> 0; // Desktop/unknown
+        };
     }
 
     private static void putIfAbsent(JwtClaims claims, String key, Object value) {
