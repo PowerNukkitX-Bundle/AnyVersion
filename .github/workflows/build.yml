@@ -1,0 +1,83 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - '**'
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build-gradle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Read project metadata
+        id: project
+        shell: bash
+        run: |
+          VERSION=$(./gradlew properties -q | sed -n 's/^version: //p')
+
+          echo "artifact_id=AnyVersion" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "jar_path=build/libs/AnyVersion.jar" >> "$GITHUB_OUTPUT"
+
+      - name: Verify artifact
+        shell: bash
+        run: |
+          if [ ! -f "${{ steps.project.outputs.jar_path }}" ]; then
+            echo "${{ steps.project.outputs.jar_path }} was not created"
+            exit 1
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: ${{ steps.project.outputs.artifact_id }}
+          path: ${{ steps.project.outputs.jar_path }}
+
+      - name: Create GitHub release
+        if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            RELEASE_TAG="${{ github.ref_name }}"
+          else
+            RELEASE_TAG="${{ steps.project.outputs.tag }}"
+          fi
+
+          RELEASE_NOTES=$(gh api "repos/${{ github.repository }}/releases/generate-notes" \
+            -f tag_name="$RELEASE_TAG" \
+            -f target_commitish="${{ github.sha }}" \
+            --jq .body)
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${{ steps.project.outputs.jar_path }}" --clobber
+            gh release edit "$RELEASE_TAG" --notes "$RELEASE_NOTES"
+          else
+            gh release create "$RELEASE_TAG" "${{ steps.project.outputs.jar_path }}" --target "${{ github.sha }}" --title "$RELEASE_TAG" --notes "$RELEASE_NOTES"
+          fi

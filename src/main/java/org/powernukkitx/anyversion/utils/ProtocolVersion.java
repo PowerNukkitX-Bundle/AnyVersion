@@ -138,7 +138,7 @@ public enum ProtocolVersion {
     }
 
     public static ProtocolVersion getMin() {
-        return versions[0];
+        return MINECRAFT_PE_1_20_60;
     }
 
     public static ProtocolVersion getMax() {
