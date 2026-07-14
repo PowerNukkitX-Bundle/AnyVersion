@@ -219,7 +219,8 @@ public class ProtocolManager implements Listener {
                 return;
             }
 
-            final PlayerAuthenticationType type = packet.getAuthenticationType();
+            PlayerAuthenticationType type = packet.getAuthenticationType();
+            if (type == null) type = PlayerAuthenticationType.SELF_SIGNED;
             final DisconnectFailReason notAuthenticated = DisconnectFailReason.NOT_AUTHENTICATED;
             if (type.equals(PlayerAuthenticationType.UNKNOWN)) {
                 holder.disconnect(notAuthenticated);
@@ -227,14 +228,14 @@ public class ProtocolManager implements Listener {
             }
 
             final boolean xboxAuthRequired = server.getSettings().baseSettings().xboxAuth();
-            if (xboxAuthRequired && packet.getToken() == null || packet.getToken().isEmpty()) {
+            if (xboxAuthRequired && !hasTokenOrChain(packet)) {
                 holder.disconnect(notAuthenticated);
                 return;
             }
 
             try {
-                final ChainValidationResult result = EncryptionUtils.validateToken(type, packet.getToken());
-                if (xboxAuthRequired && !result.signed() && !server.getSettings().baseSettings().waterdogpe()) {
+                final ChainValidationResult result = validateChainOrToken(packet, type);
+                if (xboxAuthRequired && (!result.signed() && !server.getSettings().baseSettings().waterdogpe())) {
                     holder.disconnect(notAuthenticated);
                     return;
                 }
@@ -289,6 +290,21 @@ public class ProtocolManager implements Listener {
                 log.debug("Lenient login failed for protocol {}", version.protocol(), e);
                 holder.disconnect(notAuthenticated);
             }
+        }
+
+        private boolean hasTokenOrChain(LoginPacket packet) {
+            return (packet.getToken() != null && !packet.getToken().isEmpty())
+                    || (packet.getChain() != null && !packet.getChain().isEmpty());
+        }
+
+        private ChainValidationResult validateChainOrToken(LoginPacket packet, PlayerAuthenticationType type) throws Exception {
+            if (packet.getToken() != null && !packet.getToken().isEmpty()) {
+                return EncryptionUtils.validateToken(type, packet.getToken());
+            }
+            if (packet.getChain() != null && !packet.getChain().isEmpty()) {
+                return EncryptionUtils.validateChain(packet.getChain());
+            }
+            throw new IllegalStateException("Login packet has no authentication token or chain");
         }
 
         private LenientClientJwt validateClientJwtLenient(LoginPacket packet, PublicKey identityPublicKey) {
