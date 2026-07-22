@@ -22,7 +22,7 @@ import io.netty.channel.ChannelPipeline;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.cloudburstmc.protocol.bedrock.data.auth.PlayerAuthenticationType;
-import org.cloudburstmc.protocol.bedrock.data.skin.SerializedSkin;
+import org.cloudburstmc.protocol.bedrock.data.skin.Skin;
 import org.cloudburstmc.protocol.bedrock.netty.codec.packet.BedrockPacketCodec;
 import org.cloudburstmc.protocol.bedrock.data.DisconnectFailReason;
 import org.cloudburstmc.protocol.bedrock.data.PacketCompressionAlgorithm;
@@ -235,7 +235,7 @@ public class ProtocolManager implements Listener {
 
             try {
                 final ChainValidationResult result = validateChainOrToken(packet, type);
-                if (xboxAuthRequired && (!result.signed() && !server.getSettings().baseSettings().waterdogpe())) {
+                if (xboxAuthRequired && !result.signed()) {
                     holder.disconnect(notAuthenticated);
                     return;
                 }
@@ -330,7 +330,7 @@ public class ProtocolManager implements Listener {
                     return null;
                 }
 
-                final SerializedSkin skin;
+                final Skin skin;
                 try {
                     skin = ClientSkinData.readSkin(claims);
                 } catch (RuntimeException e) {
@@ -370,7 +370,7 @@ public class ProtocolManager implements Listener {
         }
     }
 
-    private record LenientClientJwt(ClientChainData chain, SerializedSkin skin) { }
+    private record LenientClientJwt(ClientChainData chain, Skin skin) { }
 
     private static void padChainClaims(JwtClaims claims) {
         putIfAbsent(claims, "CompatibleWithClientSideChunkGen", Boolean.FALSE);

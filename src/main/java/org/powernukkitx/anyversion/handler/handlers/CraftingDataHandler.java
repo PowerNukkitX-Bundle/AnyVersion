@@ -4,18 +4,21 @@ import org.powernukkitx.item.Item;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
-import org.cloudburstmc.protocol.bedrock.data.inventory.crafting.CraftingDataEntryType;
-import org.cloudburstmc.protocol.bedrock.data.inventory.crafting.recipe.*;
-import org.cloudburstmc.protocol.bedrock.data.inventory.descriptor.DefaultDescriptor;
 import org.cloudburstmc.protocol.bedrock.data.inventory.descriptor.ItemDescriptor;
-import org.cloudburstmc.protocol.bedrock.data.inventory.descriptor.ItemDescriptorWithCount;
+import org.cloudburstmc.protocol.bedrock.data.inventory.descriptor.NameDescriptor;
+import org.cloudburstmc.protocol.bedrock.data.inventory.descriptor.RecipeIngredient;
+import org.cloudburstmc.protocol.bedrock.data.payload.crafting.FurnaceRecipePayload;
+import org.cloudburstmc.protocol.bedrock.data.payload.crafting.ShapedRecipePayload;
+import org.cloudburstmc.protocol.bedrock.data.payload.crafting.ShapelessRecipePayload;
+import org.cloudburstmc.protocol.bedrock.data.payload.crafting.SmithingTransformRecipePayload;
+import org.cloudburstmc.protocol.bedrock.data.payload.crafting.SmithingTrimRecipePayload;
 import org.cloudburstmc.protocol.bedrock.packet.CraftingDataPacket;
 import org.powernukkitx.anyversion.handler.PacketHandler;
 import org.powernukkitx.anyversion.manager.ProtocolPlayer;
 import org.powernukkitx.anyversion.registries.Registries;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class CraftingDataHandler extends PacketHandler<CraftingDataPacket> {
@@ -24,83 +27,165 @@ public class CraftingDataHandler extends PacketHandler<CraftingDataPacket> {
 
     @Override
     public void handle(ProtocolPlayer player, CraftingDataPacket packet) {
-        List<CraftingDataEntry> craftingData = new ArrayList<>(packet.getCraftingEntries());
-        packet.getCraftingEntries().clear();
-        recipe:
-        for (CraftingDataEntry uncast : craftingData) {
-            CraftingDataEntry result = uncast;
-            if (uncast instanceof GridCraftingDataEntry data) {
-                ObjectArrayList<ItemDescriptorWithCount> ingredients = new ObjectArrayList<>();
-                ObjectArrayList<ItemData> results = new ObjectArrayList<>();
-                for (ItemDescriptorWithCount descriptor : data.getIngredientList()) {
-                    ItemDescriptorWithCount itemDescriptor = translateItemDescriptorWithCount(player.getVersion(), descriptor);
-                    if (itemDescriptor == null) continue recipe;
-                    ingredients.add(itemDescriptor);
-                }
-                for (ItemData itemData : data.getProductionList()) {
-                    ItemData downgrade = Registries.ITEM.downgrade(player.getVersion(), itemData);
-                    if (downgrade.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgrade).getDefinition().getIdentifier())) continue recipe;
-                    results.add(downgrade);
-                }
-                if (data instanceof ShapedRecipe shaped) {
-                    result = ShapedRecipe.of(shaped.getType(), shaped.getRecipeUniqueId(), shaped.getRecipeWidth(), shaped.getRecipeHeight(), ingredients, results, shaped.getRecipeID(), shaped.getRecipeTag(), shaped.getPriority(), shaped.getNetId(), shaped.isAssumeSymmetry(), shaped.getUnlockingRequirement());
-                } else if (data instanceof ShapelessRecipe shapeless) {
-                    if (FURNACE_TAGS.contains(shapeless.getRecipeTag()) && player.getVersion().protocol() < ProtocolVersion.MINECRAFT_PE_1_26_20.protocol()) {
-                        int inputId = org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getInt(ingredients.getFirst().toItem().getDefinition().getIdentifier());
-                        ItemData resultItem = data.getProductionList().getFirst();
-                        Item item = Item.get(org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
-                        if (item == null) continue recipe;
-                        ItemData itemData = ItemData.builder().definition(new SimpleItemDefinition(item.getId(), item.getRuntimeId(), false)).build();
-                        ItemData downgrade = Registries.ITEM.downgrade(player.getVersion(), itemData);
-                        if (downgrade.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgrade).getDefinition().getIdentifier())) continue recipe;
-                        inputId = downgrade.getDefinition().getRuntimeId();
-                        resultItem = Registries.ITEM.downgrade(player.getVersion(), resultItem);
-                        if (resultItem.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(resultItem).getDefinition().getIdentifier())) continue recipe;
-                        result = FurnaceRecipe.of(CraftingDataEntryType.FURNACE_RECIPE, inputId, 0, resultItem, shapeless.getRecipeTag());
-                    } else {
-                        result = ShapelessRecipe.of(shapeless.getType(), shapeless.getRecipeUniqueId(), ingredients, results, shapeless.getRecipeID(), shapeless.getRecipeTag(), shapeless.getPriority(), shapeless.getNetId(), shapeless.getUnlockingRequirement());
-                    }
-                }
-            } else if (uncast instanceof FurnaceRecipe data) {
-                int inputId = data.getInputId();
-                int damage = data.getInputData();
-                ItemData resultItem = data.getResultItem();
-                Item item = Item.get(org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
-                if (item == null) continue recipe;
-                ItemData itemData = ItemData.builder().definition(new SimpleItemDefinition(item.getId(), item.getRuntimeId(), false)).build();
-                ItemData downgrade = Registries.ITEM.downgrade(player.getVersion(), itemData);
-                if (downgrade.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgrade).getDefinition().getIdentifier())) continue recipe;
-                inputId = downgrade.getDefinition().getRuntimeId();
-                damage = downgrade.getDamage();
-                resultItem = Registries.ITEM.downgrade(player.getVersion(), resultItem);
-                if (resultItem.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(resultItem).getDefinition().getIdentifier())) continue recipe;
-                result = FurnaceRecipe.of(data.getType(), inputId, damage, resultItem, data.getRecipeTag());
-            } else if (uncast instanceof SmithingTrimRecipe data) {
-                ItemDescriptorWithCount base = translateItemDescriptorWithCount(player.getVersion(), data.getBaseIngredient());
-                ItemDescriptorWithCount addition = translateItemDescriptorWithCount(player.getVersion(), data.getAdditionIngredient());
-                ItemDescriptorWithCount template = translateItemDescriptorWithCount(player.getVersion(), data.getTemplateIngredient());
-                if (base == null || addition == null || template == null) continue recipe;
-                result = SmithingTrimRecipe.of(data.getRecipeUniqueId(), base, addition, template, data.getRecipeTag(), data.getNetId());
-            } else if (uncast instanceof SmithingTransformRecipe data) {
-                ItemDescriptorWithCount base = translateItemDescriptorWithCount(player.getVersion(), data.getBaseIngredient());
-                ItemDescriptorWithCount addition = translateItemDescriptorWithCount(player.getVersion(), data.getAdditionIngredient());
-                ItemDescriptorWithCount template = translateItemDescriptorWithCount(player.getVersion(), data.getTemplateIngredient());
-                ItemData downgrade = Registries.ITEM.downgrade(player.getVersion(), data.getResult());
-                if (base == null || addition == null || template == null || downgrade.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgrade).getDefinition().getIdentifier())) continue recipe;
-                result = SmithingTransformRecipe.of(data.getRecipeUniqueId(), base, addition, template, downgrade, data.getRecipeTag(), data.getNetId());
+        ProtocolVersion version = player.getVersion();
+
+        // Furnace recipes are downgraded first so that the ones synthesized from
+        // shapeless recipes below are not processed a second time.
+        packet.getFurnaceRecipes().removeIf(recipe -> !translateFurnaceRecipe(version, recipe));
+
+        processShapedRecipes(version, packet.getShapedRecipes());
+        processShapedRecipes(version, packet.getShapedChemistryRecipes());
+
+        processShapelessRecipes(player, packet, packet.getShapelessRecipes());
+        processShapelessRecipes(player, packet, packet.getShapelessChemistryRecipes());
+        processShapelessRecipes(player, packet, packet.getUserDataShapelessRecipes());
+
+        packet.getSmithingTrimRecipes().removeIf(recipe -> !translateSmithingTrimRecipe(version, recipe));
+        packet.getSmithingTransformRecipes().removeIf(recipe -> !translateSmithingTransformRecipe(version, recipe));
+    }
+
+    private void processShapedRecipes(ProtocolVersion version, List<ShapedRecipePayload> recipes) {
+        recipes.removeIf(recipe -> !translateGrid(version, recipe.getIngredients(), recipe.getResults()));
+    }
+
+    private void processShapelessRecipes(ProtocolPlayer player, CraftingDataPacket packet, List<ShapelessRecipePayload> recipes) {
+        ProtocolVersion version = player.getVersion();
+        Iterator<ShapelessRecipePayload> iterator = recipes.iterator();
+        while (iterator.hasNext()) {
+            ShapelessRecipePayload recipe = iterator.next();
+
+            List<RecipeIngredient> ingredients = translateIngredients(version, recipe.getIngredients());
+            if (ingredients == null) {
+                iterator.remove();
+                continue;
             }
-            packet.getCraftingEntries().add(result);
+            List<ItemData> results = downgradeResults(version, recipe.getResults());
+            if (results == null) {
+                iterator.remove();
+                continue;
+            }
+
+            if (FURNACE_TAGS.contains(recipe.getTag()) && version.protocol() < ProtocolVersion.MINECRAFT_PE_1_26_20.protocol()) {
+                // Older protocols expect furnace recipes to be sent as furnace entries rather than shapeless ones.
+                FurnaceRecipePayload furnace = toFurnaceRecipe(version, ingredients.getFirst(), recipe.getResults().getFirst(), recipe.getTag());
+                iterator.remove();
+                if (furnace != null) {
+                    packet.getFurnaceRecipes().add(furnace);
+                }
+            } else {
+                replace(recipe.getIngredients(), ingredients);
+                replace(recipe.getResults(), results);
+            }
         }
     }
 
-    protected ItemDescriptorWithCount translateItemDescriptorWithCount(ProtocolVersion version, ItemDescriptorWithCount descriptor) {
-        ItemDescriptor itemDescriptor = descriptor.getDescriptor();
-        if (itemDescriptor instanceof DefaultDescriptor defaultDescriptor) {
-            ItemData itemData = itemDescriptor.toItem().build();
-            ItemData downgrade = Registries.ITEM.downgrade(version, itemData);
-            if (downgrade.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgrade).getDefinition().getIdentifier())) return null;
-            itemDescriptor = new DefaultDescriptor(downgrade.getDefinition(), defaultDescriptor.getAuxValue());
+    private FurnaceRecipePayload toFurnaceRecipe(ProtocolVersion version, RecipeIngredient input, ItemData result, String tag) {
+        int inputId = org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getInt(input.toItem().getDefinition().getIdentifier());
+        Item item = Item.get(org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
+        if (item == null) return null;
+        ItemData itemData = ItemData.builder().definition(new SimpleItemDefinition(item.getId(), item.getRuntimeId(), false)).build();
+        ItemData downgrade = Registries.ITEM.downgrade(version, itemData);
+        if (isDropped(downgrade)) return null;
+        ItemData resultItem = Registries.ITEM.downgrade(version, result);
+        if (isDropped(resultItem)) return null;
+
+        FurnaceRecipePayload payload = new FurnaceRecipePayload();
+        payload.setInputId(downgrade.getDefinition().getRuntimeId());
+        payload.setAuxValue(-1);
+        payload.setResult(resultItem);
+        payload.setTag(tag);
+        return payload;
+    }
+
+    private boolean translateFurnaceRecipe(ProtocolVersion version, FurnaceRecipePayload recipe) {
+        Item item = Item.get(org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getIdentifier(recipe.getInputId()));
+        if (item == null) return false;
+        ItemData itemData = ItemData.builder().definition(new SimpleItemDefinition(item.getId(), item.getRuntimeId(), false)).build();
+        ItemData downgrade = Registries.ITEM.downgrade(version, itemData);
+        if (isDropped(downgrade)) return false;
+        ItemData resultItem = Registries.ITEM.downgrade(version, recipe.getResult());
+        if (isDropped(resultItem)) return false;
+
+        recipe.setInputId(downgrade.getDefinition().getRuntimeId());
+        // A non-aux furnace recipe keeps its auxValue at -1; only aux recipes carry a damage value.
+        if (recipe.getAuxValue() != -1) {
+            recipe.setAuxValue(downgrade.getDamage());
         }
-        return new ItemDescriptorWithCount(itemDescriptor, descriptor.getCount());
+        recipe.setResult(resultItem);
+        return true;
+    }
+
+    private boolean translateSmithingTrimRecipe(ProtocolVersion version, SmithingTrimRecipePayload recipe) {
+        RecipeIngredient base = translateIngredient(version, recipe.getBaseIngredient());
+        RecipeIngredient addition = translateIngredient(version, recipe.getAdditionIngredient());
+        RecipeIngredient template = translateIngredient(version, recipe.getTemplateIngredient());
+        if (base == null || addition == null || template == null) return false;
+        recipe.setBaseIngredient(base);
+        recipe.setAdditionIngredient(addition);
+        recipe.setTemplateIngredient(template);
+        return true;
+    }
+
+    private boolean translateSmithingTransformRecipe(ProtocolVersion version, SmithingTransformRecipePayload recipe) {
+        RecipeIngredient base = translateIngredient(version, recipe.getBaseIngredient());
+        RecipeIngredient addition = translateIngredient(version, recipe.getAdditionIngredient());
+        RecipeIngredient template = translateIngredient(version, recipe.getTemplateIngredient());
+        ItemData result = Registries.ITEM.downgrade(version, recipe.getResult());
+        if (base == null || addition == null || template == null || isDropped(result)) return false;
+        recipe.setBaseIngredient(base);
+        recipe.setAdditionIngredient(addition);
+        recipe.setTemplateIngredient(template);
+        recipe.setResult(result);
+        return true;
+    }
+
+    private boolean translateGrid(ProtocolVersion version, List<RecipeIngredient> ingredients, List<ItemData> results) {
+        List<RecipeIngredient> translatedIngredients = translateIngredients(version, ingredients);
+        if (translatedIngredients == null) return false;
+        List<ItemData> downgradedResults = downgradeResults(version, results);
+        if (downgradedResults == null) return false;
+        replace(ingredients, translatedIngredients);
+        replace(results, downgradedResults);
+        return true;
+    }
+
+    private List<RecipeIngredient> translateIngredients(ProtocolVersion version, List<RecipeIngredient> ingredients) {
+        ObjectArrayList<RecipeIngredient> translated = new ObjectArrayList<>();
+        for (RecipeIngredient ingredient : ingredients) {
+            RecipeIngredient result = translateIngredient(version, ingredient);
+            if (result == null) return null;
+            translated.add(result);
+        }
+        return translated;
+    }
+
+    private List<ItemData> downgradeResults(ProtocolVersion version, List<ItemData> results) {
+        ObjectArrayList<ItemData> downgraded = new ObjectArrayList<>();
+        for (ItemData itemData : results) {
+            ItemData downgrade = Registries.ITEM.downgrade(version, itemData);
+            if (isDropped(downgrade)) return null;
+            downgraded.add(downgrade);
+        }
+        return downgraded;
+    }
+
+    protected RecipeIngredient translateIngredient(ProtocolVersion version, RecipeIngredient ingredient) {
+        ItemDescriptor descriptor = ingredient.getDescriptor();
+        if (descriptor instanceof NameDescriptor nameDescriptor) {
+            ItemData itemData = descriptor.toItem().build();
+            ItemData downgrade = Registries.ITEM.downgrade(version, itemData);
+            if (isDropped(downgrade)) return null;
+            descriptor = new NameDescriptor(downgrade.getDefinition(), nameDescriptor.getAuxValue());
+        }
+        return new RecipeIngredient(descriptor, ingredient.getStackSize());
+    }
+
+    private boolean isDropped(ItemData downgrade) {
+        return downgrade.getDefinition().getIdentifier().equals(Registries.ITEM.getOutdated(downgrade).getDefinition().getIdentifier());
+    }
+
+    private <T> void replace(List<T> target, List<T> replacement) {
+        target.clear();
+        target.addAll(replacement);
     }
 }
