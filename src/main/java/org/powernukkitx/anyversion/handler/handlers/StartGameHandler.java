@@ -10,7 +10,7 @@ import org.powernukkitx.registry.ItemRegistry;
 import org.powernukkitx.registry.ItemRuntimeIdRegistry;
 import org.powernukkitx.registry.Registries;
 import org.cloudburstmc.nbt.NbtMap;
-import org.cloudburstmc.protocol.bedrock.data.BlockPropertyData;
+import org.cloudburstmc.protocol.bedrock.data.ServerBlockProperty;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
@@ -36,10 +36,6 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
             packet.getSettings().setWorldId("");
             packet.getSettings().setScenarioId("");
             packet.getSettings().setOwnerId("");
-            packet.setServerID("");
-            packet.setWorldID("");
-            packet.setScenarioID("");
-            packet.setOwnerID("");
         }
 
         if(player.protocol() < ProtocolVersion.MINECRAFT_PE_1_21_130.protocol()) {
@@ -75,7 +71,7 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
                         }
                     }
                 }
-                packet.getBlockProperties().add(new BlockPropertyData(definition.identifier(), InventoryTransactionHandler.deepcopy(nbt)));
+                packet.getBlockProperties().add(new ServerBlockProperty(definition.identifier(), InventoryTransactionHandler.deepcopy(nbt)));
             }
         }
 
