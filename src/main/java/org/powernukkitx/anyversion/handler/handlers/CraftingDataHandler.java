@@ -42,6 +42,9 @@ public class CraftingDataHandler extends PacketHandler<CraftingDataPacket> {
 
         packet.getSmithingTrimRecipes().removeIf(recipe -> !translateSmithingTrimRecipe(version, recipe));
         packet.getSmithingTransformRecipes().removeIf(recipe -> !translateSmithingTransformRecipe(version, recipe));
+
+        //Temp fix
+        packet.getFurnaceRecipes().clear();
     }
 
     private void processShapedRecipes(ProtocolVersion version, List<ShapedRecipePayload> recipes) {

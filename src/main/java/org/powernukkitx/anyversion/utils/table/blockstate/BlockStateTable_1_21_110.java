@@ -79,7 +79,7 @@ public class BlockStateTable_1_21_110 extends BlockStateTable {
                 of(PALE_OAK_SHELF),
                 of(SPRUCE_SHELF),
                 of(WARPED_SHELF),
-                of(IRON_CHAIN, new IronChainTransformer())
+                of(IRON_CHAIN)
         );
     }
 

@@ -6,7 +6,6 @@ import org.powernukkitx.event.EventHandler;
 import org.powernukkitx.event.Listener;
 import org.powernukkitx.event.player.PlayerJoinEvent;
 import org.powernukkitx.event.player.PlayerQuitEvent;
-import org.powernukkitx.event.server.PacketReceiveEvent;
 import org.powernukkitx.network.NetworkConstants;
 import org.powernukkitx.network.process.PacketHandler;
 import org.powernukkitx.network.process.PacketHandlerRegistry;
@@ -17,11 +16,11 @@ import org.powernukkitx.network.process.auth.ClientSkinData;
 import org.powernukkitx.network.process.handler.LoginHandler;
 import org.powernukkitx.event.player.PlayerPreLoginEvent;
 import org.powernukkitx.utils.SkinUtils;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelPipeline;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.cloudburstmc.protocol.bedrock.data.auth.PlayerAuthenticationType;
+import org.cloudburstmc.protocol.bedrock.BedrockSession;
 import org.cloudburstmc.protocol.bedrock.data.skin.Skin;
 import org.cloudburstmc.protocol.bedrock.netty.codec.packet.BedrockPacketCodec;
 import org.cloudburstmc.protocol.bedrock.data.DisconnectFailReason;
@@ -40,7 +39,6 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 import org.powernukkitx.anyversion.AnyVersion;
 import org.powernukkitx.anyversion.registries.Registries;
-import org.powernukkitx.anyversion.utils.BedrockPacketDeepCopy;
 import org.powernukkitx.anyversion.utils.PBedrockPacketCodec;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
@@ -55,47 +53,16 @@ public class ProtocolManager implements Listener {
 
     private static final Object2ObjectOpenHashMap<String, ProtocolPlayer> players = new Object2ObjectOpenHashMap<>();
     private static final Object2ObjectOpenHashMap<PlayerSessionHolder, ProtocolVersion> pendingVersions = new Object2ObjectOpenHashMap<>();
-    private static final Field PACKET_RECEIVE_EVENT_PACKET_FIELD;
-
-    static {
-        try {
-            PACKET_RECEIVE_EVENT_PACKET_FIELD = PacketReceiveEvent.class.getDeclaredField("packet");
-            PACKET_RECEIVE_EVENT_PACKET_FIELD.setAccessible(true);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Unable to access PacketReceiveEvent packet field", e);
-        }
-    }
-
     public ProtocolManager() {
         registerPreLoginHandlers();
-    }
-
-    @EventHandler
-    public void onPacketReceive(PacketReceiveEvent event) {
-        ProtocolPlayer protocolPlayer = get(event.getPlayer());
-        if (protocolPlayer != null) {
-            BedrockPacket packet = BedrockPacketDeepCopy.copy(
-                    ByteBufAllocator.DEFAULT,
-                    protocolPlayer.getVersion().codec(),
-                    protocolPlayer.getVersion().helper(),
-                    event.getPacket());
-            Registries.PACKETHANDLER.handlePacket(protocolPlayer.withPlayer(event.getPlayer()), packet);
-            replacePacket(event, packet);
-        }
-    }
-
-    private static void replacePacket(PacketReceiveEvent event, BedrockPacket packet) {
-        try {
-            PACKET_RECEIVE_EVENT_PACKET_FIELD.set(event, packet);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Unable to replace PacketReceiveEvent packet", e);
-        }
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         ProtocolPlayer protocolPlayer = get(event.getPlayer());
         if (protocolPlayer != null) {
+            protocolPlayer = protocolPlayer.withPlayer(event.getPlayer());
+            players.put(event.getPlayer().getXUID(), protocolPlayer);
             ProtocolVersion version = protocolPlayer.getVersion();
             AnyVersion.getPlugin().getLogger().info(event.getPlayer().getName() + " joined with outdated Minecraft " + version.version() + " (" + version.protocol() + ")");
         }
@@ -112,6 +79,13 @@ public class ProtocolManager implements Listener {
 
     public static ProtocolPlayer get(Player player) {
         return player == null ? null : get(player.getXUID());
+    }
+
+    public static ProtocolPlayer get(BedrockSession session) {
+        return players.values().stream()
+                .filter(player -> player.player() == session)
+                .findFirst()
+                .orElse(null);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

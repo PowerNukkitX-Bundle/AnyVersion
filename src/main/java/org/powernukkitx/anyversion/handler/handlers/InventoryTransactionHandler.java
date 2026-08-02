@@ -1,5 +1,6 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
+import org.cloudburstmc.protocol.bedrock.data.payload.inventory.transaction.ItemUseClientCooldownState;
 import org.powernukkitx.Player;
 import org.powernukkitx.block.Block;
 import org.powernukkitx.block.BlockAir;
@@ -31,9 +32,24 @@ public class InventoryTransactionHandler extends PacketHandler<InventoryTransact
         if (!(packet.getTransaction() instanceof ItemUseInventoryTransaction transaction)) {
             return;
         }
+        if (transaction.getPosition() != null && transaction.getFromPosition() != null) {
+            Vector3i position = transaction.getPosition();
+            int correctedY = (position.getY() << 1) ^ (position.getY() >> 31);
+            double playerY = transaction.getFromPosition().getY();
+
+            // Some clients encode the block Y as an unsigned VarInt, while the
+            // protocol codec decodes it as a signed ZigZag VarInt. Only apply the
+            // inverse mapping when it produces the plausible nearby coordinate.
+            if (Math.abs(position.getY() - playerY) > 16 && Math.abs(correctedY - playerY) <= 16) {
+                transaction.setPosition(Vector3i.from(position.getX(), correctedY, position.getZ()));
+            }
+        }
         Player p = player.nukkitPlayer();
         if (p == null) {
             return;
+        }
+        if(transaction.getClientCooldownState() == null) {
+            transaction.setClientCooldownState(ItemUseClientCooldownState.ON);
         }
 
         if (transaction.getTargetBlockId() == null) {
