@@ -65,10 +65,28 @@ public class SetEntityDataHandler extends PacketHandler<SetActorDataPacket> {
     }
 
     public static final void fixEntityFlags(ProtocolVersion version, ActorDataMap meta) {
+
+        if(version.protocol() < ProtocolVersion.MINECRAFT_PE_1_21_0.protocol()) {
+            meta.remove(ActorDataTypes.VISIBLE_MOB_EFFECTS);
+        }
+        if(version.protocol() < ProtocolVersion.MINECRAFT_PE_1_21_60.protocol()) {
+            meta.remove(ActorDataTypes.FILTERED_NAME);
+            meta.remove(ActorDataTypes.BED_ENTER_POSITION);
+        }
+        if(version.protocol() < ProtocolVersion.MINECRAFT_PE_1_21_80.protocol()) {
+            meta.remove(ActorDataTypes.SEAT_THIRD_PERSON_CAMERA_RADIUS);
+            meta.remove(ActorDataTypes.SEAT_CAMERA_RELAX_DISTANCE_SMOOTHING);
+        }
+        if(version.protocol() < ProtocolVersion.MINECRAFT_PE_1_26_0.protocol()) {
+            meta.remove(ActorDataTypes.AIM_ASSIST_PRIORITY_PRESET_ID);
+            meta.remove(ActorDataTypes.AIM_ASSIST_PRIORITY_CATEGORY_ID);
+            meta.remove(ActorDataTypes.AIM_ASSIST_PRIORITY_ACTOR_ID);
+        }
         if(version.protocol() < ProtocolVersion.MINECRAFT_PE_1_26_20.protocol()) {
             meta.remove(ActorDataTypes.RESERVED_139);
             meta.remove(ActorDataTypes.NAMEPLATE_RENDER_DISTANCE_MAX);
         }
+
         BedrockCodecHelper codec = version.helper();
         if(meta.getFlags() != null) {
             try {
