@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import org.cloudburstmc.protocol.bedrock.data.inventory.FullContainerName;
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.ItemStackRequest;
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.ItemStackRequestSlotInfo;
+import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.TextProcessingEventOrigin;
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.*;
 import org.cloudburstmc.protocol.bedrock.packet.ItemStackRequestPacket;
 import org.powernukkitx.anyversion.handler.PacketHandler;
@@ -11,13 +12,17 @@ import org.powernukkitx.anyversion.manager.ProtocolPlayer;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
 public class ItemStackRequestHandler extends PacketHandler<ItemStackRequestPacket> {
     @SneakyThrows
     @Override
     public void handle(ProtocolPlayer player, ItemStackRequestPacket packet) {
-        for (ItemStackRequest request : packet.getRequests()) {
-            for (ItemStackRequestAction action : request.getActions()) {
+        for (int requestIndex = 0; requestIndex < packet.getRequests().size(); requestIndex++) {
+            ItemStackRequest request = packet.getRequests().get(requestIndex);
+            ItemStackRequestAction[] actions = request.getActions();
+            for (int actionIndex = 0; actionIndex < actions.length; actionIndex++) {
+                ItemStackRequestAction action = actions[actionIndex];
                 if (action instanceof TransferItemStackRequestAction requestAction) {
                     ensureFullContainerName(requestAction.getSource());
                     ensureFullContainerName(requestAction.getDestination());
@@ -37,7 +42,16 @@ public class ItemStackRequestHandler extends PacketHandler<ItemStackRequestPacke
                 } else if (action instanceof SwapAction swapAction) {
                     ensureFullContainerName(swapAction.getSource());
                     ensureFullContainerName(swapAction.getDestination());
+                } else if (action instanceof CraftResultsDeprecatedAction craftResults
+                        && craftResults.getCraftResults() == null) {
+                    actions[actionIndex] = new CraftResultsDeprecatedAction(
+                            craftResults.getResultItemsDeprecated(), List.of(), craftResults.getNumCrafts());
                 }
+            }
+            if (request.getStringsToFilterOrigin() == null) {
+                packet.getRequests().set(requestIndex, new ItemStackRequest(
+                        request.getClientRequestId(), actions, request.getStringsToFilter(),
+                        TextProcessingEventOrigin.UNKNOWN));
             }
         }
     }

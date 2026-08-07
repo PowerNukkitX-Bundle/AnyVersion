@@ -5,6 +5,7 @@ import org.cloudburstmc.protocol.bedrock.codec.ActorDataTypeMap;
 import org.cloudburstmc.protocol.bedrock.codec.BaseBedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodecHelper;
 import org.cloudburstmc.protocol.bedrock.data.actor.ActorDataMap;
+import org.cloudburstmc.protocol.bedrock.data.actor.ActorDataType;
 import org.cloudburstmc.protocol.bedrock.data.actor.ActorDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.actor.ActorFlags;
 import org.cloudburstmc.protocol.bedrock.packet.SetActorDataPacket;
@@ -15,6 +16,8 @@ import org.powernukkitx.anyversion.manager.ProtocolPlayer;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
 
 import java.lang.reflect.Field;
+import java.util.EnumSet;
+import java.util.Map;
 
 public class SetEntityDataHandler extends PacketHandler<SetActorDataPacket> {
 
@@ -44,9 +47,19 @@ public class SetEntityDataHandler extends PacketHandler<SetActorDataPacket> {
 
     public static ActorDataMap copyActorData(ActorDataMap meta) {
         ActorDataMap copy = new ActorDataMap();
-        copy.putAll(meta);
-        if (meta.getFlags() != null) {
-            copy.putFlags(meta.getFlags().clone());
+        for (Object element : meta.entrySet().toArray()) {
+            Map.Entry<?, ?> entry = (Map.Entry<?, ?>) element;
+            Object key = entry.getKey();
+            if (key == ActorDataTypes.FLAGS || key == ActorDataTypes.FLAGS_2) {
+                continue;
+            }
+            @SuppressWarnings("unchecked")
+            var type = (ActorDataType<Object>) key;
+            copy.put(type, entry.getValue());
+        }
+        EnumSet<ActorFlags> flags = meta.getFlags();
+        if (flags != null) {
+            copy.putFlags(flags.clone());
         }
         return copy;
     }
