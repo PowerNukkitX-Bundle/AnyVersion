@@ -42,6 +42,7 @@ public class PacketHandlerRegistry extends Registry {
         HANDLERS.add(new CameraAimAssistPresetsHandler());
         HANDLERS.add(new TextHandler());
         HANDLERS.add(new PlayerListHandler());
+        HANDLERS.add(new CommandRequestHandler());
     }
 
     public boolean handlePacket(ProtocolPlayer player, BedrockPacket packet) {
