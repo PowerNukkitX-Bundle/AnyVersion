@@ -1,6 +1,7 @@
 package org.powernukkitx.anyversion.utils;
 
 import org.cloudburstmc.protocol.bedrock.codec.v2168.Bedrock_v2168;
+import org.cloudburstmc.protocol.bedrock.codec.v2168.Bedrock_v2168_hotfix4;
 import org.powernukkitx.network.NetworkConstants;
 import lombok.Getter;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
@@ -35,8 +36,10 @@ import org.cloudburstmc.protocol.bedrock.codec.v944.Bedrock_v944;
 import org.cloudburstmc.protocol.bedrock.codec.v975.Bedrock_v975;
 import org.cloudburstmc.protocol.bedrock.codec.v1001.Bedrock_v1001;
 import org.cloudburstmc.protocol.bedrock.data.EncodingSettings;
+import org.powernukkitx.utils.SemVersion;
 
 import java.util.Arrays;
+import java.util.List;
 
 public enum ProtocolVersion {
   /*MINECRAFT_PE_1_8(313, Bedrock_v313.CODEC),
@@ -100,15 +103,26 @@ public enum ProtocolVersion {
     MINECRAFT_PE_1_26_10(944, Bedrock_v944.CODEC),
     MINECRAFT_PE_1_26_20(975, Bedrock_v975.CODEC),
     MINECRAFT_PE_1_26_30(1001, Bedrock_v1001.CODEC),
-    MINECRAFT_PE_1_26_40(2168, Bedrock_v2168.CODEC);
+    MINECRAFT_PE_1_26_40(2168, Bedrock_v2168.CODEC),
+    MINECRAFT_PE_1_26_44(2168, Bedrock_v2168_hotfix4.CODEC);
 
+    @Getter
     private static final ProtocolVersion[] versions = values();
+    @Getter
     private static final ProtocolVersion current = findCurrent();
 
     private final int PROTOCOL;
     private final BedrockCodec CODEC;
 
     private final BedrockCodecHelper HELPER;
+
+    /**
+     * TODO: We need a better code for this. This looks terrible
+     */
+    private static final List<BedrockCodec> TEMP_CODECS = List.of(
+            Bedrock_v2168_hotfix4.CODEC,
+            Bedrock_v2168.CODEC
+    );
 
     ProtocolVersion(int protocol, BedrockCodec codec) {
         this.PROTOCOL = protocol;
@@ -150,7 +164,7 @@ public enum ProtocolVersion {
     private static ProtocolVersion findCurrent() {
         int serverProtocol = NetworkConstants.CODEC.getProtocolVersion();
         return Arrays.stream(versions)
-                .filter(p -> p.protocol() == serverProtocol)
+                .filter(p -> p.protocol() == serverProtocol && p.version().equals(NetworkConstants.CODEC.getMinecraftVersion())) // TODO: temp, or persistent maybe? not bad
                 .findAny()
                 .orElseGet(ProtocolVersion::getMax);
     }
@@ -163,11 +177,30 @@ public enum ProtocolVersion {
         return Arrays.stream(versions).anyMatch(p -> p.protocol() == protocol);
     }
 
-    public static ProtocolVersion[] getVersions() {
-        return versions;
+    public static BedrockCodec codecForGameVersion(String gameVersion) {
+        if (gameVersion == null) {
+            return getMax().CODEC;
+        }
+        final SemVersion clientVersion = SemVersion.fromString(gameVersion);
+        for (BedrockCodec codec : TEMP_CODECS) {
+            if (compare(SemVersion.fromString(codec.getMinecraftVersion()), clientVersion) <= 0) {
+                return codec;
+            }
+        }
+        return getMax().CODEC;
     }
 
-    public static ProtocolVersion getCurrent() {
-        return current;
+    private static int compare(SemVersion left, SemVersion right) {
+        int result = Integer.compare(left.major(), right.major());
+        if (result == 0) {
+            result = Integer.compare(left.minor(), right.minor());
+        }
+        if (result == 0) {
+            result = Integer.compare(left.patch(), right.patch());
+        }
+        if (result == 0) {
+            result = Integer.compare(left.revision(), right.revision());
+        }
+        return result;
     }
 }
