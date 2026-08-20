@@ -245,13 +245,16 @@ public class ProtocolManager implements Listener {
                     return;
                 }
 
-                if (lenient.chain.isEduMode()) {
+                var clientChainData = lenient.chain;
+
+                if (clientChainData.isEduMode()) {
                     holder.sendPlayStatus(PlayStatus.LOGIN_FAILED_EDITION_MISMATCH_EDU_TO_VANILLA);
                     holder.disconnect(DisconnectFailReason.EDITION_MISMATCH_EDU_TO_VANILLA);
                     return;
                 }
 
-                holder.setPlayerInfo(new Player.PlayerInfo(identityClaims, lenient.chain, lenient.skin, result.signed()));
+                holder.getSession().setCodec(ProtocolVersion.codecForGameVersion(clientChainData.getGameVersion()));
+                holder.setPlayerInfo(new Player.PlayerInfo(identityClaims, clientChainData, lenient.skin, result.signed()));
 
                 if (server.enabledNetworkEncryption) {
                     enableEncryption(identityClaims, holder);
