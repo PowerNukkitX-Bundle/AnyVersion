@@ -104,7 +104,8 @@ public enum ProtocolVersion {
     MINECRAFT_PE_1_26_20(975, Bedrock_v975.CODEC),
     MINECRAFT_PE_1_26_30(1001, Bedrock_v1001.CODEC),
     MINECRAFT_PE_1_26_40(2168, Bedrock_v2168.CODEC),
-    MINECRAFT_PE_1_26_44(2168, Bedrock_v2168_hotfix4.CODEC);
+    MINECRAFT_PE_1_26_44(2168, Bedrock_v2168_hotfix4.CODEC),
+    MINECRAFT_PE_1_26_45(2169, Bedrock_v2168.CODEC.toBuilder().minecraftVersion("1.26.45").protocolVersion(2169).build()); // lmao what a headache
 
     @Getter
     private static final ProtocolVersion[] versions = values();
@@ -178,7 +179,7 @@ public enum ProtocolVersion {
     }
 
     public static BedrockCodec codecForGameVersion(String gameVersion) {
-        if (gameVersion == null) {
+        if (gameVersion == null || gameVersion.equals(getMax().CODEC.getMinecraftVersion())) { // temporary for 1.26.45
             return getMax().CODEC;
         }
         final SemVersion clientVersion = SemVersion.fromString(gameVersion);
