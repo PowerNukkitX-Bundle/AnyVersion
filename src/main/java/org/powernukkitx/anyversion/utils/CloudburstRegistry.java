@@ -51,7 +51,7 @@ public class CloudburstRegistry {
             if (Registries.ITEM.getCustomItemDefinition().containsKey(data.identifier())) {
                 tag = Registries.ITEM.getCustomItemDefinition().get(data.identifier()).nbt();
             }
-            SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), NbtMap.fromMap(tag.parseValue()));
+            SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), tag.toNetwork());
             itemDefinitions.add(definition);
         }
         itemDefinitionRegistry = SimpleDefinitionRegistry.<ItemDefinition>builder().addAll(itemDefinitions).build();

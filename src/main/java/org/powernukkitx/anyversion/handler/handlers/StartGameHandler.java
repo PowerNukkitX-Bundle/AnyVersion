@@ -71,7 +71,7 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
                         }
                     }
                 }
-                packet.getBlockProperties().add(new ServerBlockProperty(definition.identifier(), InventoryTransactionHandler.deepcopy(nbt)));
+                packet.getBlockProperties().add(new ServerBlockProperty(definition.identifier(), nbt.toNetwork()));
             }
         }
 
@@ -87,7 +87,7 @@ public class StartGameHandler extends PacketHandler<StartGamePacket> {
                 } else if (Registries.ITEM.getCustomItemDefinition().containsKey(data.identifier())) {
                     tag = Registries.ITEM.getCustomItemDefinition().get(data.identifier()).nbt();
                 }
-                SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), NbtMap.fromMap(tag.parseValue()));
+                SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), tag.toNetwork());
                 ItemData cbItemdata = ItemData.builder().definition(definition).build();
                 SimpleItemDefinition downgraded = (SimpleItemDefinition) org.powernukkitx.anyversion.registries.Registries.ITEM.downgrade(player.getVersion(), cbItemdata).getDefinition();
                 String downgradedIdentifier = downgraded.getIdentifier();
