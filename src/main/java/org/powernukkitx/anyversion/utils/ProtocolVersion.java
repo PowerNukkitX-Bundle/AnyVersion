@@ -178,17 +178,26 @@ public enum ProtocolVersion {
         return Arrays.stream(versions).anyMatch(p -> p.protocol() == protocol);
     }
 
-    public static BedrockCodec codecForGameVersion(String gameVersion) {
-        if (gameVersion == null || gameVersion.equals(getMax().CODEC.getMinecraftVersion())) { // temporary for 1.26.45
-            return getMax().CODEC;
+    public static BedrockCodec codecForGameVersion(ProtocolVersion defaultVersion, String gameVersion) {
+        if (defaultVersion == null) {
+            defaultVersion = getMax();
         }
-        final SemVersion clientVersion = SemVersion.fromString(gameVersion);
-        for (BedrockCodec codec : TEMP_CODECS) {
-            if (compare(SemVersion.fromString(codec.getMinecraftVersion()), clientVersion) <= 0) {
-                return codec;
+        if (gameVersion == null) {
+            return defaultVersion.codec();
+        }
+        if (defaultVersion.protocol() == 2168) {
+            final SemVersion clientVersion = SemVersion.fromString(gameVersion);
+            for (BedrockCodec codec : TEMP_CODECS) {
+                if (compare(SemVersion.fromString(codec.getMinecraftVersion()), clientVersion) <= 0) {
+                    return codec;
+                }
             }
         }
-        return getMax().CODEC;
+        return defaultVersion.codec();
+    }
+
+    public static BedrockCodec codecForGameVersion(String gameVersion) {
+        return codecForGameVersion(getMax(), gameVersion);
     }
 
     private static int compare(SemVersion left, SemVersion right) {
