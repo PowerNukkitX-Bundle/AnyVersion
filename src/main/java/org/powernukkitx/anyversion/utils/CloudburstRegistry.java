@@ -54,16 +54,9 @@ public class CloudburstRegistry {
             SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), NbtMap.fromMap(tag.parseValue()));
             itemDefinitions.add(definition);
         }
-        List<BlockDefinition> blockDefinitions = new ArrayList<>();
-        for (var blockState : Registries.BLOCKSTATE.getAllState()) {
-            NbtMap map = blockState.getBlockStateTag();
-            SimpleBlockDefinition definition = new SimpleBlockDefinition(blockState.getIdentifier(), blockState.blockStateHash(), map);
-            blockDefinitions.add(definition);
-        }
-        List<NamedDefinition> namedDefinitions = new ArrayList<>();
         itemDefinitionRegistry = SimpleDefinitionRegistry.<ItemDefinition>builder().addAll(itemDefinitions).build();
-        blockDefinitionRegistry = SimpleDefinitionRegistry.<BlockDefinition>builder().addAll(blockDefinitions).build();
-        namedDefinitionRegistry = SimpleDefinitionRegistry.<NamedDefinition>builder().addAll(namedDefinitions).build();
+        blockDefinitionRegistry = new org.powernukkitx.utils.RuntimeBlockDefinitionRegistry();
+        namedDefinitionRegistry = org.powernukkitx.utils.DefaultCameraPresets.getDefinitions();
     }
 
     DefinitionRegistry<ItemDefinition> getItemDefinitionRegistry() {
