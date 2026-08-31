@@ -10,6 +10,8 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemVersion;
 import org.cloudburstmc.protocol.common.DefinitionRegistry;
 import org.cloudburstmc.protocol.common.NamedDefinition;
 import org.cloudburstmc.protocol.common.SimpleDefinitionRegistry;
+import org.powernukkitx.utils.DefaultCameraPresets;
+import org.powernukkitx.utils.RuntimeBlockDefinitionRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,19 +53,12 @@ public class CloudburstRegistry {
             if (Registries.ITEM.getCustomItemDefinition().containsKey(data.identifier())) {
                 tag = Registries.ITEM.getCustomItemDefinition().get(data.identifier()).nbt();
             }
-            SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), NbtMap.fromMap(tag.parseValue()));
+            SimpleItemDefinition definition = new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), tag.toNetwork());
             itemDefinitions.add(definition);
         }
-        List<BlockDefinition> blockDefinitions = new ArrayList<>();
-        for (var blockState : Registries.BLOCKSTATE.getAllState()) {
-            NbtMap map = blockState.getBlockStateTag();
-            SimpleBlockDefinition definition = new SimpleBlockDefinition(blockState.getIdentifier(), blockState.blockStateHash(), map);
-            blockDefinitions.add(definition);
-        }
-        List<NamedDefinition> namedDefinitions = new ArrayList<>();
         itemDefinitionRegistry = SimpleDefinitionRegistry.<ItemDefinition>builder().addAll(itemDefinitions).build();
-        blockDefinitionRegistry = SimpleDefinitionRegistry.<BlockDefinition>builder().addAll(blockDefinitions).build();
-        namedDefinitionRegistry = SimpleDefinitionRegistry.<NamedDefinition>builder().addAll(namedDefinitions).build();
+        blockDefinitionRegistry = new RuntimeBlockDefinitionRegistry();
+        namedDefinitionRegistry = DefaultCameraPresets.getDefinitions();
     }
 
     DefinitionRegistry<ItemDefinition> getItemDefinitionRegistry() {

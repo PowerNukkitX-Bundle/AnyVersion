@@ -253,7 +253,7 @@ public class ProtocolManager implements Listener {
                     return;
                 }
 
-                holder.getSession().setCodec(ProtocolVersion.codecForGameVersion(clientChainData.getGameVersion()));
+                holder.getSession().setCodec(ProtocolVersion.codecForGameVersion(version, clientChainData.getGameVersion()));
                 holder.setPlayerInfo(new Player.PlayerInfo(identityClaims, clientChainData, lenient.skin, result.signed()));
 
                 if (server.enabledNetworkEncryption) {

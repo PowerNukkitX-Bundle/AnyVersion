@@ -12,6 +12,9 @@ public class ServerStartedListener implements Listener {
         for(ProtocolVersion version : ProtocolVersion.getVersions()) {
             version.helper().setItemDefinitions(CloudburstRegistry.get().getItemDefinitionRegistry());
             version.helper().setBlockDefinitions(CloudburstRegistry.get().getBlockDefinitionRegistry());
+            try {
+                version.helper().setCameraPresetDefinitions(CloudburstRegistry.get().getNamedDefinitionRegistry());
+            } catch (Exception ignored) {}
         }
     }
 

@@ -64,7 +64,7 @@ public class InventoryTransactionHandler extends PacketHandler<InventoryTransact
         ItemData.Builder builder = ItemData.builder();
         builder.definition(new SimpleItemDefinition(iHand.getId(), iHand.getRuntimeId(), false));
         if (iHand.getNbt() != null) {
-            builder.tag(deepcopy(iHand.getNbt()));
+            builder.tag(iHand.getNbt().toNetwork());
         }
         if (iHand.isBlock()) {
             Block block = iHand.getBlockUnsafe();
@@ -102,9 +102,5 @@ public class InventoryTransactionHandler extends PacketHandler<InventoryTransact
             }
             transaction.setClientInteractPrediction(ItemUsePredictedResult.SUCCESS);
         }
-    }
-
-    public static NbtMap deepcopy(CompoundTag tag) {
-        return NbtMap.fromMap(tag.parseValue());
     }
 }

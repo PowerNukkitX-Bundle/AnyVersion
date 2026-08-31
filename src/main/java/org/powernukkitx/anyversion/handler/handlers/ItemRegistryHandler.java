@@ -31,31 +31,11 @@ public class ItemRegistryHandler extends PacketHandler<ItemRegistryPacket> {
                         icon.putString("texture", icon.getCompound("textures").getString("default"));
                         icon.remove("textures");
                     }
-                    definitions.add(new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), fromCompound(tag)));
+                    definitions.add(new SimpleItemDefinition(data.identifier(), data.runtimeId(), ItemVersion.from(data.version()), data.componentBased(), tag.toNetwork()));
                 }
             }
             packet.getItemData().clear();
             packet.getItemData().addAll(definitions);
         }
-    }
-
-    public NbtMap fromCompound(CompoundTag tag) {
-        NbtMapBuilder builder = NbtMap.builder();
-        for (var entry : tag.getTags().entrySet()) {
-            String key = entry.getKey();
-            Tag value = entry.getValue();
-            if (value instanceof CompoundTag v) {
-                builder.put(key, fromCompound(v));
-            } else if (value instanceof ListTag<?> v) {
-                builder.putList(key, (NbtType) NbtType.byId(v.type), (java.util.List) v.parseValue());
-            } else if (value instanceof ByteTag v) {
-                builder.putByte(key, (byte) (v.data & 0xFF));
-            } else if (value instanceof ShortTag v) {
-                builder.putShort(key, v.data);
-            } else {
-                builder.put(key, value.parseValue());
-            }
-        }
-        return builder.build();
     }
 }
