@@ -5,6 +5,7 @@ import org.powernukkitx.plugin.PluginManager;
 import lombok.Getter;
 import org.powernukkitx.anyversion.config.AnyVersionConfig;
 import org.powernukkitx.anyversion.manager.ProtocolManager;
+import org.powernukkitx.anyversion.network.RakNetFallback;
 import org.powernukkitx.anyversion.registries.Registries;
 import org.powernukkitx.anyversion.utils.ServerStartedListener;
 
@@ -28,5 +29,10 @@ public class AnyVersion extends PluginBase {
         pluginManager.registerEvents(new ProtocolManager(), this);
         pluginManager.registerEvents(new ServerStartedListener(), this);
         Registries.init();
+    }
+
+    @Override
+    public void onDisable() {
+        RakNetFallback.shutdown();
     }
 }

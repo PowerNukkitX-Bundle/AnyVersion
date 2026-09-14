@@ -3,4 +3,7 @@
 
 lowestVersion: 649 # The lowest version the client can join. Default is 649 (1.20.60)
 
-configVersion: 1.0.0 # Do not change this.
+raknetFallback: true # Only matters when PNX runs on the nethernet transport. Binds RakNet next to it so clients older than 1.26.50 can still join.
+raknetFallbackPort: 0 # UDP port for that listener. 0 uses the server port, which needs query off and nethernet.udpPort set to a port of its own.
+
+configVersion: 1.1.0 # Do not change this.
