@@ -3,9 +3,7 @@ package org.powernukkitx.anyversion.handler.handlers;
 import it.unimi.dsi.fastutil.Pair;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.nbt.NbtUtils;
-import org.cloudburstmc.protocol.bedrock.data.biome.BiomeDefinitionChunkGenData;
 import org.cloudburstmc.protocol.bedrock.data.biome.BiomeDefinitionData;
-import org.cloudburstmc.protocol.bedrock.data.biome.BiomeSurfaceBuilderData;
 import org.cloudburstmc.protocol.bedrock.packet.BiomeDefinitionListPacket;
 import org.powernukkitx.anyversion.AnyVersion;
 import org.powernukkitx.anyversion.handler.PacketHandler;
@@ -16,17 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BiomeDefinitionListHandler extends PacketHandler<BiomeDefinitionListPacket> {
-
-    private static final BiomeSurfaceBuilderData EMPTY_SURFACE_BUILDER = new BiomeSurfaceBuilderData(
-            null,
-            false,
-            false,
-            false,
-            false,
-            null,
-            null,
-            null
-    );
 
     @Override
     public void handle(ProtocolPlayer player, BiomeDefinitionListPacket packet) {
@@ -45,27 +32,10 @@ public class BiomeDefinitionListHandler extends PacketHandler<BiomeDefinitionLis
         }
     }
 
-    private BiomeDefinitionData sanitizeBiome(BiomeDefinitionData data) {
-        BiomeDefinitionChunkGenData chunkGenData = data.getChunkGenData();
-        if (chunkGenData == null || chunkGenData.getSurfaceBuilderData() != null) {
+    static BiomeDefinitionData sanitizeBiome(BiomeDefinitionData data) {
+        if (data.getChunkGenData() == null) {
             return data;
         }
-
-        BiomeDefinitionChunkGenData sanitizedChunkGenData = new BiomeDefinitionChunkGenData(
-                chunkGenData.getClimate(),
-                chunkGenData.getConsolidatedFeatures(),
-                chunkGenData.getMountainParams(),
-                chunkGenData.getSurfaceMaterialAdjustment(),
-                EMPTY_SURFACE_BUILDER,
-                chunkGenData.getOverworldGenRules(),
-                chunkGenData.getMultinoiseGenRules(),
-                chunkGenData.getLegacyWorldGenRules(),
-                chunkGenData.getReplacementData(),
-                chunkGenData.getReplacementBiomes(),
-                chunkGenData.getVillageType(),
-                chunkGenData.getSubSurfaceBuilderData()
-        );
-
         return new BiomeDefinitionData(
                 data.getId(),
                 data.getTemperature(),
@@ -79,7 +49,10 @@ public class BiomeDefinitionListHandler extends PacketHandler<BiomeDefinitionLis
                 data.getMapWaterColor(),
                 data.isRain(),
                 data.getTags(),
-                sanitizedChunkGenData,
+                // Generation metadata can reference PNX runtime block IDs
+                // that are not registered in the legacy codec. Preserve
+                // visual biome properties without those definitions.
+                null,
                 data.getFoliageSnow()
         );
     }
