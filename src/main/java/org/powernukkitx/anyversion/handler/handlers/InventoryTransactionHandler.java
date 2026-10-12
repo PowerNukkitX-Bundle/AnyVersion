@@ -1,6 +1,7 @@
 package org.powernukkitx.anyversion.handler.handlers;
 
 import org.cloudburstmc.protocol.bedrock.data.payload.inventory.transaction.ItemUseClientCooldownState;
+import org.cloudburstmc.protocol.bedrock.data.HandSlot;
 import org.powernukkitx.Player;
 import org.powernukkitx.block.Block;
 import org.powernukkitx.block.BlockAir;
@@ -12,7 +13,6 @@ import org.powernukkitx.nbt.tag.CompoundTag;
 import org.cloudburstmc.math.vector.Vector3i;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleBlockDefinition;
-import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.data.payload.inventory.transaction.ItemUseActionType;
 import org.cloudburstmc.protocol.bedrock.data.payload.inventory.transaction.ItemUsePredictedResult;
@@ -22,6 +22,7 @@ import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket;
 import org.powernukkitx.anyversion.handler.PacketHandler;
 import org.powernukkitx.anyversion.manager.ProtocolPlayer;
 import org.powernukkitx.anyversion.registries.Registries;
+import org.powernukkitx.anyversion.utils.NbtMapConverter;
 
 import java.lang.reflect.Method;
 
@@ -31,6 +32,11 @@ public class InventoryTransactionHandler extends PacketHandler<InventoryTransact
     public void handle(ProtocolPlayer player, InventoryTransactionPacket packet) {
         if (!(packet.getTransaction() instanceof ItemUseInventoryTransaction transaction)) {
             return;
+        }
+        if (transaction.getHand() == null) {
+            // Protocol 2169 does not always supply this field, but the 2192
+            // codec requires it when AnyVersion re-encodes the transaction.
+            transaction.setHand(HandSlot.MAINHAND);
         }
         if (transaction.getPosition() != null && transaction.getFromPosition() != null) {
             Vector3i position = transaction.getPosition();
@@ -61,16 +67,9 @@ public class InventoryTransactionHandler extends PacketHandler<InventoryTransact
         }
 
         Item iHand = p.getInventory().getItemInMainHand();
-        ItemData.Builder builder = ItemData.builder();
-        builder.definition(new SimpleItemDefinition(iHand.getId(), iHand.getRuntimeId(), false));
-        if (iHand.getNbt() != null) {
-            builder.tag(deepcopy(iHand.getNbt()));
-        }
-        if (iHand.isBlock()) {
-            Block block = iHand.getBlockUnsafe();
-            builder.blockDefinition(new SimpleBlockDefinition(block.getId(), block.getRuntimeId(), NbtMap.EMPTY));
-        }
-        ItemData serverHand = builder.build();
+        // Survival validates count, wear, NBT and network stack identity before
+        // firing interactions. Preserve the complete authoritative inventory item.
+        ItemData serverHand = authoritativeHand(iHand);
         ItemData data = transaction.getItem();
         if (data != null && data.getDefinition() != null && Registries.ITEM.downgrade(player.getVersion(), serverHand).getDefinition().getRuntimeId() == data.getDefinition().getRuntimeId()) {
             transaction.setItem(serverHand);
@@ -105,6 +104,10 @@ public class InventoryTransactionHandler extends PacketHandler<InventoryTransact
     }
 
     public static NbtMap deepcopy(CompoundTag tag) {
-        return NbtMap.fromMap(tag.parseValue());
+        return NbtMapConverter.toCloudburst(tag);
+    }
+
+    public static ItemData authoritativeHand(Item item) {
+        return item.toNetwork();
     }
 }

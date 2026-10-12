@@ -3,7 +3,7 @@ package org.powernukkitx.anyversion.handler.handlers;
 import org.powernukkitx.nbt.tag.*;
 import org.powernukkitx.registry.ItemRuntimeIdRegistry;
 import org.powernukkitx.registry.Registries;
-import org.cloudburstmc.nbt.*;
+import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemVersion;
@@ -11,6 +11,7 @@ import org.cloudburstmc.protocol.bedrock.packet.ItemRegistryPacket;
 import org.powernukkitx.anyversion.handler.PacketHandler;
 import org.powernukkitx.anyversion.manager.ProtocolPlayer;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
+import org.powernukkitx.anyversion.utils.NbtMapConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,22 +41,6 @@ public class ItemRegistryHandler extends PacketHandler<ItemRegistryPacket> {
     }
 
     public NbtMap fromCompound(CompoundTag tag) {
-        NbtMapBuilder builder = NbtMap.builder();
-        for (var entry : tag.getTags().entrySet()) {
-            String key = entry.getKey();
-            Tag value = entry.getValue();
-            if (value instanceof CompoundTag v) {
-                builder.put(key, fromCompound(v));
-            } else if (value instanceof ListTag<?> v) {
-                builder.putList(key, (NbtType) NbtType.byId(v.type), (java.util.List) v.parseValue());
-            } else if (value instanceof ByteTag v) {
-                builder.putByte(key, (byte) (v.data & 0xFF));
-            } else if (value instanceof ShortTag v) {
-                builder.putShort(key, v.data);
-            } else {
-                builder.put(key, value.parseValue());
-            }
-        }
-        return builder.build();
+        return NbtMapConverter.toCloudburst(tag);
     }
 }
