@@ -184,20 +184,25 @@ public enum ProtocolVersion {
         return Arrays.stream(versions).anyMatch(p -> p.protocol() == protocol);
     }
 
-    public static BedrockCodec codecForGameVersion(String gameVersion) {
+    /**
+     * Picks the codec for a client we already matched by protocol. The game version only matters
+     * when several codecs share that protocol number (1.26.40 and its hotfix), otherwise the
+     * protocol's own codec wins, so older clients don't get bumped onto the server codec.
+     */
+    public static BedrockCodec codecForGameVersion(ProtocolVersion version, String gameVersion) {
         if (gameVersion == null) {
-            return getCurrent().CODEC;
+            return version.CODEC;
         }
         final SemVersion clientVersion = SemVersion.fromString(gameVersion);
         for (BedrockCodec codec : TEMP_CODECS) {
-            if (codec.getProtocolVersion() > getCurrent().protocol()) {
+            if (codec.getProtocolVersion() != version.protocol() || codec.getProtocolVersion() > getCurrent().protocol()) {
                 continue;
             }
             if (compare(SemVersion.fromString(codec.getMinecraftVersion()), clientVersion) <= 0) {
                 return codec;
             }
         }
-        return getCurrent().CODEC;
+        return version.CODEC;
     }
 
     private static int compare(SemVersion left, SemVersion right) {
