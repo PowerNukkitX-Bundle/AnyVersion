@@ -9,10 +9,14 @@ import java.util.Map;
 
 public class AnyVersionConfig {
 
-    public static String CONFIG_VERSION = "1.0.0";
+    public static String CONFIG_VERSION = "1.1.0";
 
     @Getter
     private final int lowestVersion;
+    @Getter
+    private final boolean raknetFallback;
+    @Getter
+    private final int raknetFallbackPort;
     @Getter
     private final String configVersion;
 
@@ -30,6 +34,8 @@ public class AnyVersionConfig {
         }
 
         this.lowestVersion = plugin.getConfig().getInt("lowestVersion", 618);
+        this.raknetFallback = plugin.getConfig().getBoolean("raknetFallback", true);
+        this.raknetFallbackPort = plugin.getConfig().getInt("raknetFallbackPort", 0);
         this.configVersion = plugin.getConfig().getString("configVersion", CONFIG_VERSION);
     }
 

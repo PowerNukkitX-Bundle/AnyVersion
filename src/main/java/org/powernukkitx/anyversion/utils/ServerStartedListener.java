@@ -1,8 +1,10 @@
 package org.powernukkitx.anyversion.utils;
 
+import org.powernukkitx.Server;
 import org.powernukkitx.event.EventHandler;
 import org.powernukkitx.event.Listener;
 import org.powernukkitx.event.server.ServerStartedEvent;
+import org.powernukkitx.anyversion.network.RakNetFallback;
 
 public class ServerStartedListener implements Listener {
 
@@ -13,6 +15,7 @@ public class ServerStartedListener implements Listener {
             version.helper().setItemDefinitions(CloudburstRegistry.get().getItemDefinitionRegistry());
             version.helper().setBlockDefinitions(CloudburstRegistry.get().getBlockDefinitionRegistry());
         }
+        RakNetFallback.start(Server.getInstance());
     }
 
 }

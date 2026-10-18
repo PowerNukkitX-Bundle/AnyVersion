@@ -2,6 +2,8 @@ package org.powernukkitx.anyversion.utils;
 
 import org.cloudburstmc.protocol.bedrock.codec.v2168.Bedrock_v2168;
 import org.cloudburstmc.protocol.bedrock.codec.v2168.Bedrock_v2168_hotfix4;
+import org.cloudburstmc.protocol.bedrock.codec.v2169.Bedrock_v2169;
+import org.cloudburstmc.protocol.bedrock.codec.v2192.Bedrock_v2192;
 import org.powernukkitx.network.NetworkConstants;
 import lombok.Getter;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
@@ -105,7 +107,9 @@ public enum ProtocolVersion {
     MINECRAFT_PE_1_26_30(1001, Bedrock_v1001.CODEC),
     MINECRAFT_PE_1_26_40(2168, Bedrock_v2168.CODEC),
     MINECRAFT_PE_1_26_44(2168, Bedrock_v2168_hotfix4.CODEC),
-    MINECRAFT_PE_1_26_45(2169, Bedrock_v2168.CODEC.toBuilder().minecraftVersion("1.26.45").protocolVersion(2169).build()); // lmao what a headache
+    // 1.26.45 bumped the protocol but kept 1.26.40's packet formats, so only the codec differs.
+    MINECRAFT_PE_1_26_45(2169, Bedrock_v2169.CODEC),
+    MINECRAFT_PE_1_26_50(2192, Bedrock_v2192.CODEC);
 
     @Getter
     private static final ProtocolVersion[] versions = values();
@@ -121,6 +125,8 @@ public enum ProtocolVersion {
      * TODO: We need a better code for this. This looks terrible
      */
     private static final List<BedrockCodec> TEMP_CODECS = List.of(
+            Bedrock_v2192.CODEC,
+            Bedrock_v2169.CODEC,
             Bedrock_v2168_hotfix4.CODEC,
             Bedrock_v2168.CODEC
     );
@@ -179,16 +185,19 @@ public enum ProtocolVersion {
     }
 
     public static BedrockCodec codecForGameVersion(String gameVersion) {
-        if (gameVersion == null || gameVersion.equals(getMax().CODEC.getMinecraftVersion())) { // temporary for 1.26.45
-            return getMax().CODEC;
+        if (gameVersion == null) {
+            return getCurrent().CODEC;
         }
         final SemVersion clientVersion = SemVersion.fromString(gameVersion);
         for (BedrockCodec codec : TEMP_CODECS) {
+            if (codec.getProtocolVersion() > getCurrent().protocol()) {
+                continue;
+            }
             if (compare(SemVersion.fromString(codec.getMinecraftVersion()), clientVersion) <= 0) {
                 return codec;
             }
         }
-        return getMax().CODEC;
+        return getCurrent().CODEC;
     }
 
     private static int compare(SemVersion left, SemVersion right) {

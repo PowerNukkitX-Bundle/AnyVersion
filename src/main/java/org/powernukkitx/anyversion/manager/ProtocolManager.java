@@ -38,6 +38,7 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 import org.powernukkitx.anyversion.AnyVersion;
+import org.powernukkitx.anyversion.network.RakNetFallback;
 import org.powernukkitx.anyversion.registries.Registries;
 import org.powernukkitx.anyversion.utils.PBedrockPacketCodec;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
@@ -108,6 +109,10 @@ public class ProtocolManager implements Listener {
             int clientProtocol = packet.getClientNetworkVersion();
             int serverProtocol = NetworkConstants.CODEC.getProtocolVersion();
             ProtocolVersion version = ProtocolVersion.has(clientProtocol) ? ProtocolVersion.get(clientProtocol) : null;
+            if (RakNetFallback.isFallbackSession(holder.getSession()) && RakNetFallback.belongsOnNetherNet(clientProtocol)) {
+                holder.disconnect(DisconnectFailReason.UNKNOWN, "Your version joins over NetherNet, not RakNet");
+                return;
+            }
             if (clientProtocol > serverProtocol) {
                 holder.sendPlayStatus(PlayStatus.LOGIN_FAILED_SERVER_OLD);
                 holder.disconnect(DisconnectFailReason.OUTDATED_SERVER);
