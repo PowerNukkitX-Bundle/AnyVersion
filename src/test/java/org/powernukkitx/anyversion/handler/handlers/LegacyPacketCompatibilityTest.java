@@ -21,6 +21,8 @@ import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.math.vector.Vector3i;
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.BiomeDefinitionListPacket;
+import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket;
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerType;
 import it.unimi.dsi.fastutil.Pair;
 import org.junit.jupiter.api.Test;
 import org.powernukkitx.anyversion.manager.ProtocolPlayer;
@@ -99,6 +101,23 @@ class LegacyPacketCompatibilityTest {
         try {
             assertDoesNotThrow(() -> ProtocolVersion.get(2169).codec().tryEncode(
                     ProtocolVersion.get(2169).helper(), encoded, packet));
+        } finally {
+            encoded.release();
+        }
+    }
+
+    @Test
+    void fillsMissingContainerTypeBeforeNewCodecEncoding() {
+        ContainerClosePacket packet = new ContainerClosePacket();
+        packet.setContainerID((byte) 0);
+
+        new ContainerCloseHandler().handle(packetPlayer(), packet);
+
+        assertEquals(ContainerType.NONE, packet.getContainerType());
+        ByteBuf encoded = Unpooled.buffer();
+        try {
+            assertDoesNotThrow(() -> ProtocolVersion.get(2192).codec().tryEncode(
+                    ProtocolVersion.get(2192).helper(), encoded, packet));
         } finally {
             encoded.release();
         }
