@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class SurvivalHandCompatibilityTest {
     @org.junit.jupiter.api.BeforeAll
     static void registerNativeItems() {
+        // potion items build their names from the potion registry while ItemRegistry inits
+        org.powernukkitx.registry.Registries.EFFECT.init();
+        org.powernukkitx.registry.Registries.POTION.init();
         org.powernukkitx.registry.Registries.BLOCK.init();
         org.powernukkitx.registry.Registries.ITEM.init();
         org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.init();
