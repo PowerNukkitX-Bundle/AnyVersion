@@ -10,6 +10,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemVersion;
 import org.cloudburstmc.protocol.common.DefinitionRegistry;
 import org.cloudburstmc.protocol.common.NamedDefinition;
 import org.cloudburstmc.protocol.common.SimpleDefinitionRegistry;
+import org.powernukkitx.utils.DefaultCameraPresets;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,10 +61,9 @@ public class CloudburstRegistry {
             SimpleBlockDefinition definition = new SimpleBlockDefinition(blockState.getIdentifier(), blockState.blockStateHash(), map);
             blockDefinitions.add(definition);
         }
-        List<NamedDefinition> namedDefinitions = new ArrayList<>();
         itemDefinitionRegistry = SimpleDefinitionRegistry.<ItemDefinition>builder().addAll(itemDefinitions).build();
         blockDefinitionRegistry = SimpleDefinitionRegistry.<BlockDefinition>builder().addAll(blockDefinitions).build();
-        namedDefinitionRegistry = SimpleDefinitionRegistry.<NamedDefinition>builder().addAll(namedDefinitions).build();
+        namedDefinitionRegistry = DefaultCameraPresets.getDefinitions();
     }
 
     DefinitionRegistry<ItemDefinition> getItemDefinitionRegistry() {

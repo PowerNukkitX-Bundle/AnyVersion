@@ -14,6 +14,11 @@ public class ServerStartedListener implements Listener {
         for(ProtocolVersion version : ProtocolVersion.getVersions()) {
             version.helper().setItemDefinitions(CloudburstRegistry.get().getItemDefinitionRegistry());
             version.helper().setBlockDefinitions(CloudburstRegistry.get().getBlockDefinitionRegistry());
+            try {
+                version.helper().setCameraPresetDefinitions(CloudburstRegistry.get().getNamedDefinitionRegistry());
+            } catch (UnsupportedOperationException ignored) {
+                // older codec helpers don't know about camera presets at all
+            }
         }
         RakNetFallback.start(Server.getInstance());
     }
