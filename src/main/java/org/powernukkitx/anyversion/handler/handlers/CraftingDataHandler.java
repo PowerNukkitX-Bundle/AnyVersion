@@ -83,6 +83,9 @@ public class CraftingDataHandler extends PacketHandler<CraftingDataPacket> {
     }
 
     private FurnaceRecipePayload toFurnaceRecipe(ProtocolVersion version, RecipeIngredient input, ItemData result, String tag) {
+
+        if (!(input.getDescriptor() instanceof NameDescriptor)) return null;
+
         int inputId = org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getInt(input.toItem().getDefinition().getIdentifier());
         Item item = Item.get(org.powernukkitx.registry.Registries.ITEM_RUNTIMEID.getIdentifier(inputId));
         if (item == null) return null;

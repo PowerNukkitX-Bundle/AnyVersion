@@ -1,6 +1,6 @@
 [versions]
 server = "nightly-SNAPSHOT"
-bedrock-connection = "3.0.0.Beta7-Debug-SNAPSHOT"
+bedrock-connection = "3.0.0.Beta8-SNAPSHOT"
 okaeri = "5.0.1"
 lombok = "1.18.42"
 shadow = "9.0.0"

@@ -14,6 +14,7 @@ import org.powernukkitx.network.process.SessionState;
 import org.powernukkitx.network.process.auth.ClientChainData;
 import org.powernukkitx.network.process.auth.ClientSkinData;
 import org.powernukkitx.network.process.handler.LoginHandler;
+import org.powernukkitx.network.process.handler.RequestNetworkSettingsHandler;
 import org.powernukkitx.event.player.PlayerPreLoginEvent;
 import org.powernukkitx.utils.SkinUtils;
 import io.netty.channel.ChannelPipeline;
@@ -24,13 +25,10 @@ import org.cloudburstmc.protocol.bedrock.BedrockSession;
 import org.cloudburstmc.protocol.bedrock.data.skin.Skin;
 import org.cloudburstmc.protocol.bedrock.netty.codec.packet.BedrockPacketCodec;
 import org.cloudburstmc.protocol.bedrock.data.DisconnectFailReason;
-import org.cloudburstmc.protocol.bedrock.data.PacketCompressionAlgorithm;
 import org.cloudburstmc.protocol.bedrock.data.PlayStatus;
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket;
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket;
-import org.cloudburstmc.protocol.bedrock.packet.NetworkSettingsPacket;
 import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket;
-import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket;
 import org.cloudburstmc.protocol.bedrock.util.ChainValidationResult;
 import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils;
 import org.jose4j.jwt.JwtClaims;
@@ -42,6 +40,7 @@ import org.powernukkitx.anyversion.network.RakNetFallback;
 import org.powernukkitx.anyversion.registries.Registries;
 import org.powernukkitx.anyversion.utils.PBedrockPacketCodec;
 import org.powernukkitx.anyversion.utils.ProtocolVersion;
+import org.powernukkitx.network.compression.NetworkCompression;
 
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
@@ -103,11 +102,16 @@ public class ProtocolManager implements Listener {
     }
 
     private static final class AnyVersionRequestNetworkSettingsHandler implements PacketHandler<RequestNetworkSettingsPacket> {
+        private final RequestNetworkSettingsHandler delegate = new RequestNetworkSettingsHandler();
 
         @Override
         public void handle(RequestNetworkSettingsPacket packet, PlayerSessionHolder holder, Server server) {
             int clientProtocol = packet.getClientNetworkVersion();
             int serverProtocol = NetworkConstants.CODEC.getProtocolVersion();
+            if (clientProtocol == serverProtocol) {
+                delegate.handle(packet, holder, server);
+                return;
+            }
             ProtocolVersion version = ProtocolVersion.has(clientProtocol) ? ProtocolVersion.get(clientProtocol) : null;
             if (RakNetFallback.isFallbackSession(holder.getSession()) && RakNetFallback.belongsOnNetherNet(clientProtocol)) {
                 holder.disconnect(DisconnectFailReason.UNKNOWN, "Your version joins over NetherNet, not RakNet");
@@ -129,7 +133,7 @@ public class ProtocolManager implements Listener {
                 holder.disconnect(DisconnectFailReason.OUTDATED_CLIENT);
                 return;
             }
-            if (holder.getState().equals(SessionState.REQUESTED_NETWORK_SETTINGS)) {
+            if (!holder.getState().equals(SessionState.INITIAL)) {
                 holder.disconnect(DisconnectFailReason.UNEXPECTED_PACKET);
                 return;
             }
@@ -145,16 +149,13 @@ public class ProtocolManager implements Listener {
             }
             holder.setState(SessionState.REQUESTED_NETWORK_SETTINGS);
 
-            PacketCompressionAlgorithm algorithm = Server.getInstance().getSettings().networkSettings().snappy()
-                    ? PacketCompressionAlgorithm.SNAPPY
-                    : PacketCompressionAlgorithm.ZLIB;
-            NetworkSettingsPacket networkSettingsPacket = new NetworkSettingsPacket();
-            networkSettingsPacket.setCompressionThreshold(1);
-            networkSettingsPacket.setCompressionAlgorithm(algorithm);
-
-            holder.getSession().sendPacketImmediately(networkSettingsPacket);
-            holder.getSession().setCompression(algorithm);
+            NetworkCompression.configure(holder.getSession());
             holder.setState(SessionState.LOGIN);
+        }
+
+        @Override
+        public boolean requiresPlayer() {
+            return false;
         }
 
         private boolean isAddressBanned(Server server, PlayerSessionHolder holder) {
@@ -190,6 +191,11 @@ public class ProtocolManager implements Listener {
                 String xuid = holder.getPlayerInfo().getIdentityClaims().extraData.xuid;
                 players.put(xuid, new ProtocolPlayer(holder.getSession(), version.protocol()));
             }
+        }
+
+        @Override
+        public boolean requiresPlayer() {
+            return false;
         }
 
         private void handleLenient(LoginPacket packet, PlayerSessionHolder holder, Server server, ProtocolVersion version) {
@@ -261,13 +267,9 @@ public class ProtocolManager implements Listener {
                 holder.getSession().setCodec(ProtocolVersion.codecForGameVersion(version, clientChainData.getGameVersion()));
                 holder.setPlayerInfo(new Player.PlayerInfo(identityClaims, clientChainData, lenient.skin, result.signed()));
 
-                if (server.enabledNetworkEncryption) {
-                    enableEncryption(identityClaims, holder);
-                } else {
-                    holder.sendPlayStatus(PlayStatus.LOGIN_SUCCESS);
-                    holder.setState(SessionState.RESOURCE_PACK);
-                    holder.sendResourcePacksInfo(server);
-                }
+                holder.sendPlayStatus(PlayStatus.LOGIN_SUCCESS);
+                holder.setState(SessionState.RESOURCE_PACK);
+                holder.sendResourcePacksInfo(server);
             } catch (Exception e) {
                 log.debug("Lenient login failed for protocol {}", version.protocol(), e);
                 holder.disconnect(notAuthenticated);
@@ -330,32 +332,14 @@ public class ProtocolManager implements Listener {
             return null;
         }
 
-        private void enableEncryption(ChainValidationResult.IdentityClaims claims, PlayerSessionHolder holder) {
-            try {
-                var session = holder.getSession();
-                var clientKey = EncryptionUtils.parseKey(claims.identityPublicKey);
-                var encryptionKeyPair = EncryptionUtils.createKeyPair();
-                var encryptionToken = EncryptionUtils.generateRandomToken();
-                var encryptionKey = EncryptionUtils.getSecretKey(encryptionKeyPair.getPrivate(), clientKey, encryptionToken);
-                var handshakeWebToken = EncryptionUtils.createHandshakeJwt(encryptionKeyPair, encryptionToken);
-                if (!holder.getSession().isConnected()) {
-                    return;
-                }
-                var pk = new ServerToClientHandshakePacket();
-                pk.setHandshakeWebToken(handshakeWebToken);
-                session.sendPacketImmediately(pk);
-                session.enableEncryption(encryptionKey);
-                holder.setState(SessionState.ENCRYPTION);
-            } catch (Exception e) {
-                holder.disconnect(DisconnectFailReason.UNKNOWN, "encryption error");
-            }
-        }
     }
 
     private record LenientClientJwt(ClientChainData chain, Skin skin) { }
 
     private static void padChainClaims(JwtClaims claims) {
-        putIfAbsent(claims, "CompatibleWithClientSideChunkGen", Boolean.FALSE);
+        // SubChunkPacket contains separately serialized terrain data. AnyVersion currently
+        // translates inline LevelChunkPacket palettes, so downgraded clients must use that path.
+        claims.setClaim("CompatibleWithClientSideChunkGen", Boolean.FALSE);
         putIfAbsent(claims, "GraphicsMode", 0);
         putIfAbsent(claims, "MaxViewDistance", 0);
         putIfAbsent(claims, "MemoryTier", 0);

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "org.powernukkitx.anyversion"
-version = "2.8.8"
+version = "2.9.0"
 
 java {
     toolchain {
