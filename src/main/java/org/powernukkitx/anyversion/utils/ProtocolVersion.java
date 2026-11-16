@@ -4,6 +4,8 @@ import org.cloudburstmc.protocol.bedrock.codec.v2168.Bedrock_v2168;
 import org.cloudburstmc.protocol.bedrock.codec.v2168.Bedrock_v2168_hotfix4;
 import org.cloudburstmc.protocol.bedrock.codec.v2169.Bedrock_v2169;
 import org.cloudburstmc.protocol.bedrock.codec.v2192.Bedrock_v2192;
+import org.cloudburstmc.protocol.bedrock.codec.v2207.Bedrock_v2207;
+import org.cloudburstmc.protocol.bedrock.codec.v2225.Bedrock_v2225;
 import org.powernukkitx.network.NetworkConstants;
 import lombok.Getter;
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec;
@@ -109,7 +111,8 @@ public enum ProtocolVersion {
     MINECRAFT_PE_1_26_44(2168, Bedrock_v2168_hotfix4.CODEC),
     // 1.26.45 bumped the protocol but kept 1.26.40's packet formats, so only the codec differs.
     MINECRAFT_PE_1_26_45(2169, Bedrock_v2169.CODEC),
-    MINECRAFT_PE_1_26_50(2192, Bedrock_v2192.CODEC);
+    MINECRAFT_PE_1_26_50(2192, Bedrock_v2192.CODEC),
+    MINECRAFT_PE_1_26_60(2225, Bedrock_v2225.CODEC);
 
     @Getter
     private static final ProtocolVersion[] versions = values();
